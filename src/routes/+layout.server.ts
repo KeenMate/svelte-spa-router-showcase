@@ -39,6 +39,7 @@ const config: PartialDocsConfig = {
 					{ label: 'Referrer Tracking', href: '/features/referrer-tracking' },
 					{ label: 'Querystring', href: '/features/querystring' },
 					{ label: 'Filters', href: '/features/filters' },
+					{ label: 'Callbacks & Events', href: '/features/callbacks-events' },
 					{ label: 'Permissions', href: '/features/permissions' },
 					{ label: 'Multi-Zone Routing', href: '/features/multi-zone' },
 					{ label: 'Hierarchical Routes', href: '/features/hierarchical-routes' },

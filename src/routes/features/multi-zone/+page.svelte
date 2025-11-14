@@ -786,7 +786,7 @@ const isZoneRoute = $derived(
 				codeContent={`<Router
   {routes}
   zone="zoneName"  // Optional: render specific zone
-  onrouteLoaded={...}
+  onRouteLoaded={...}
   onNotFound={...}
 />`}
 				languageType="svelte"

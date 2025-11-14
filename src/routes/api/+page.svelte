@@ -707,9 +707,9 @@ import active from '@keenmate/svelte-spa-router/active'
 									<code>zone?: string</code><br>
 									<code>restoreScrollState?: boolean</code><br>
 									<code>onrouteEvent?: Function</code><br>
-									<code>onrouteLoading?: Function</code><br>
-									<code>onrouteLoaded?: Function</code><br>
-									<code>onconditionsFailed?: Function</code><br>
+									<code>onRouteLoading?: Function</code><br>
+									<code>onRouteLoaded?: Function</code><br>
+									<code>onConditionsFailed?: Function</code><br>
 									<code>onNotFound?: Function</code>
 								</td>
 							</tr>
@@ -742,9 +742,9 @@ const routes = {
 <Router
   {routes}
   restoreScrollState={true}
-  onrouteLoading={(e) => console.log('Loading:', e.detail)}
-  onrouteLoaded={(e) => console.log('Loaded:', e.detail)}
-  onconditionsFailed={() => push('/unauthorized')}
+  onRouteLoading={(e) => console.log('Loading:', e.detail)}
+  onRouteLoaded={(e) => console.log('Loaded:', e.detail)}
+  onConditionsFailed={() => push('/unauthorized')}
   onNotFound={() => console.log('404')}
 />`}
 					languageType="svelte"

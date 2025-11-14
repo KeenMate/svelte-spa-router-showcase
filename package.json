@@ -22,7 +22,7 @@
 	"type": "module",
 	"dependencies": {
 		"@keenmate/svelte-docs": "^1.0.0-rc05",
-		"@keenmate/svelte-spa-router": "^5.0.0-rc10",
+		"@keenmate/svelte-spa-router": "^5.0.0-rc12",
 		"bootstrap": "^5.3.8"
 	}
 }
