@@ -98,7 +98,7 @@ import { DocLayout, CodeBlock } from '@keenmate/svelte-docs'
 				codeContent={`<!-- ❌ v4.x - Store syntax -->
 <script>
 import { location, params, querystring } from '@keenmate/svelte-spa-router'
-</script>
+<\/script>
 
 <p>Current path: {$location}</p>
 <p>User ID: {$params.id}</p>
@@ -115,7 +115,7 @@ import { location, routeParams, querystring } from '@keenmate/svelte-spa-router'
 const currentPath = $derived(location())
 const params = $derived(routeParams())
 const query = $derived(querystring())
-</script>
+<\/script>
 
 <p>Current path: {currentPath}</p>
 <p>User ID: {params.id}</p>
@@ -131,7 +131,7 @@ const query = $derived(querystring())
 				codeContent={`<!-- ❌ v4.x - Export let -->
 <script>
 export let params = {}
-</script>
+<\/script>
 
 <h1>User {params.id}</h1>`}
 				languageType="svelte"
@@ -142,7 +142,7 @@ export let params = {}
 				codeContent={`<!-- ✅ v5.0 - $props() -->
 <script>
 let { routeParams = {} } = $props()
-</script>
+<\/script>
 
 <h1>User {routeParams.id}</h1>`}
 				languageType="svelte"

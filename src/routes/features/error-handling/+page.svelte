@@ -47,14 +47,14 @@ configureGlobalErrorHandler({
 import Router from '@keenmate/svelte-spa-router'
 import { GlobalErrorHandler } from '@keenmate/svelte-spa-router/helpers/GlobalErrorHandler'
 import { routes } from './routes'
-</script>
+<\/script>
 
 <GlobalErrorHandler />
 <Router {routes} />
 
 <style>
 /* Your styles */
-</style>`}
+<\/style>`}
 				languageType="svelte"
 				titleText="Add to App.svelte"
 			/>
@@ -348,7 +348,7 @@ console.log(\`Restart attempts: \${count}\`)`}
 import { restart, navigate, canRestart } from '@keenmate/svelte-spa-router/helpers/error-handler'
 
 let { error, errorInfo } = $props()
-</script>
+<\/script>
 
 <div class="error-container">
   <h1>⚠️ Something Went Wrong</h1>
