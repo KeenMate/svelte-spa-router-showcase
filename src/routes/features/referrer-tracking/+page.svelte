@@ -16,8 +16,8 @@ import { DocLayout, CodeBlock } from '@keenmate/svelte-docs'
 				alternative to <code>history.back()</code>.
 			</p>
 			<div class="alert alert-info">
-				<strong>New in 5.0.0-rc09:</strong> Automatic referrer tracking with configurable modes and
-				complete previous route information including parameters and route names.
+				The router provides automatic referrer tracking with configurable modes and complete
+				previous route information including parameters and route names.
 			</div>
 		</section>
 
@@ -29,7 +29,7 @@ import { DocLayout, CodeBlock } from '@keenmate/svelte-docs'
 			</p>
 
 			<CodeBlock
-				codeContent={`import { setIncludeReferrer } from '@keenmate/svelte-spa-router/utils'
+				codeContent={`import { setIncludeReferrer } from '@keenmate/svelte-spa-router'
 
 // Configure referrer tracking mode
 setIncludeReferrer('always')
@@ -103,7 +103,9 @@ setIncludeReferrer('always')
   params: {                        // Previous route parameters
     id: '123'
   },
-  routeName: 'documentDetail'      // Previous route name (if using named routes)
+  routeName: 'documentDetail',     // Previous route name (if using named routes)
+  scrollX: 0,                      // Horizontal scroll position when leaving
+  scrollY: 450                     // Vertical scroll position when leaving
 }`}
 				languageType="javascript"
 				titleText="Referrer object structure"
@@ -139,6 +141,16 @@ setIncludeReferrer('always')
 							<td>string | null</td>
 							<td>Named route identifier, or URL path as fallback</td>
 						</tr>
+						<tr>
+							<td><code>scrollX</code></td>
+							<td>number</td>
+							<td>Horizontal scroll position when user left the previous route</td>
+						</tr>
+						<tr>
+							<td><code>scrollY</code></td>
+							<td>number</td>
+							<td>Vertical scroll position when user left the previous route</td>
+						</tr>
 					</tbody>
 				</table>
 			</div>
@@ -153,7 +165,7 @@ setIncludeReferrer('always')
 
 			<CodeBlock
 				codeContent={`<script>
-import { goBack, navigationContext } from '@keenmate/svelte-spa-router/utils'
+import { goBack, navigationContext } from '@keenmate/svelte-spa-router'
 
 const navContext = $derived(navigationContext())
 const referrer = $derived(navContext?.referrer)
@@ -198,7 +210,7 @@ function handleGoBack() {
 
 			<CodeBlock
 				codeContent={`<script>
-import { push, navigationContext } from '@keenmate/svelte-spa-router/utils'
+import { push, navigationContext } from '@keenmate/svelte-spa-router'
 
 const navContext = $derived(navigationContext())
 const referrer = $derived(navContext?.referrer)
@@ -271,14 +283,113 @@ function goBackManually() {
 							<td><span class="text-danger">❌ May leave site</span></td>
 							<td><span class="text-success">✅ Custom fallback (e.g., home)</span></td>
 						</tr>
+						<tr>
+							<td>Scroll position restoration</td>
+							<td><span class="text-warning">⚠️ Browser controlled</span></td>
+							<td><span class="text-success">✅ Automatic via goBack()</span></td>
+						</tr>
 					</tbody>
 				</table>
 			</div>
 
 			<div class="alert alert-success">
-				<strong>Recommended:</strong> Use referrer tracking instead of <code>history.back()</code> for
-				reliable "Go Back" functionality that works with all navigation methods.
+				<strong>Recommended:</strong> Use <code>goBack()</code> helper with referrer tracking for
+				reliable "Go Back" functionality with automatic scroll restoration.
 			</div>
+		</section>
+
+		<!-- Scroll Position Tracking -->
+		<section class="mb-5">
+			<h2 class="mb-4">Scroll Position Tracking</h2>
+
+			<p>
+				When referrer tracking is enabled, the router automatically captures scroll positions,
+				allowing <code>goBack()</code> to restore the exact scroll position from when the user
+				left the previous page.
+			</p>
+
+			<h3 class="h4 mt-4 mb-3">How It Works</h3>
+
+			<div class="row g-4 mb-4">
+				<div class="col-md-6">
+					<div class="card h-100">
+						<div class="card-header bg-primary text-white">
+							<h5 class="mb-0">Automatic Capture</h5>
+						</div>
+						<div class="card-body">
+							<p>When you navigate away from a route, the router automatically saves:</p>
+							<ul>
+								<li><code>scrollX</code> - Horizontal scroll position</li>
+								<li><code>scrollY</code> - Vertical scroll position</li>
+							</ul>
+							<p class="mb-0">These values are stored in <code>history.state</code> and the referrer object.</p>
+						</div>
+					</div>
+				</div>
+
+				<div class="col-md-6">
+					<div class="card h-100">
+						<div class="card-header bg-success text-white">
+							<h5 class="mb-0">Automatic Restoration</h5>
+						</div>
+						<div class="card-body">
+							<p>The <code>goBack()</code> helper automatically:</p>
+							<ol>
+								<li>Navigates to the referrer location</li>
+								<li>Restores scroll to <code>(scrollX, scrollY)</code></li>
+								<li>Preserves browser history state</li>
+							</ol>
+							<p class="mb-0">Manual <code>push()</code> does <strong>NOT</strong> restore scroll.</p>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<h3 class="h4 mt-4 mb-3">History.state Persistence</h3>
+
+			<p>Referrer data (including scroll positions) is stored in the browser's <code>history.state</code>:</p>
+
+			<div class="alert alert-info">
+				<h5 class="alert-heading">What this means:</h5>
+				<ul class="mb-0">
+					<li><strong>Survives page refreshes</strong> - Referrer persists even if user refreshes the page</li>
+					<li><strong>Browser back/forward works</strong> - Native browser navigation preserves referrers</li>
+					<li><strong>Cleared on hard reload</strong> - Pressing Ctrl+Shift+R or typing new URL clears history</li>
+					<li><strong>Works across sessions</strong> - History state persists as long as the tab stays open</li>
+				</ul>
+			</div>
+
+			<h3 class="h4 mt-4 mb-3">Example</h3>
+
+			<CodeBlock
+				codeContent={`// User journey:
+// 1. User on /documents (scrolled down to Y=450)
+// 2. Clicks link to /documents/123
+// 3. Router saves referrer with scrollY: 450
+// 4. User clicks "Go Back" button
+
+import { goBack, navigationContext } from '@keenmate/svelte-spa-router'
+
+const referrer = $derived(navigationContext()?.referrer)
+
+// Referrer object contains scroll position:
+// {
+//   location: '/documents',
+//   querystring: '',
+//   scrollX: 0,
+//   scrollY: 450
+// }
+
+<button onclick={goBack}>
+  ← Back (will scroll to Y=450)
+</button>
+
+// goBack() automatically:
+// - Navigates to /documents
+// - Scrolls to (0, 450)
+// - Restores exact position from when user left`}
+				languageType="javascript"
+			/>
 		</section>
 
 		<!-- Use Cases -->
@@ -298,11 +409,14 @@ function goBackManually() {
 setIncludeReferrer('notfound')
 
 // NotFound.svelte
+import { goBack, navigationContext } from '@keenmate/svelte-spa-router'
+
+const navContext = $derived(navigationContext())
 const referrer = $derived(navContext?.referrer)
 const attemptedRoute = $derived(navContext?.attemptedRoute)
 
 {#if referrer}
-  <button onclick={() => push(referrer.location)}>
+  <button onclick={goBack}>
     ← Go Back
   </button>
 {/if}`}
@@ -373,12 +487,14 @@ const returnPath = $derived(
 							<p>Return to original page after login/signup:</p>
 							<CodeBlock
 								codeContent={`// After successful login
+import { goBack, push, navigationContext } from '@keenmate/svelte-spa-router'
+
 const referrer = navigationContext()?.referrer
 
 if (referrer?.location &&
     referrer.location !== '/login') {
-  // Return to where user came from
-  push(referrer.location)
+  // Return to where user came from with scroll restoration
+  goBack()
 } else {
   // Default to home
   push('/')

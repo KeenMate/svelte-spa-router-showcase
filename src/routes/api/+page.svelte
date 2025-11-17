@@ -197,7 +197,7 @@ let { routeParams = {} } = $props()
 // { userId: '123' }
 
 // Or via global function
-import { routeParams, navigationContext } from '@keenmate/svelte-spa-router/utils'
+import { routeParams, navigationContext } from '@keenmate/svelte-spa-router'
 const params = $derived(routeParams())
 const ctx = $derived(navigationContext())`}
 					languageType="javascript"
@@ -276,7 +276,7 @@ const ctx = $derived(navigationContext())`}
 			{#snippet controlsContent()}
 				<CodeBlock
 					codeContent={`// main.js - Configure BEFORE mounting app
-import { setHashRoutingEnabled, setBasePath, setParamReplacementPlaceholder } from '@keenmate/svelte-spa-router/utils'
+import { setHashRoutingEnabled, setBasePath, setParamReplacementPlaceholder } from '@keenmate/svelte-spa-router'
 
 // Enable history mode (clean URLs)
 setHashRoutingEnabled(false)
@@ -645,7 +645,7 @@ const routes = {
 
 			{#snippet controlsContent()}
 				<CodeBlock
-					codeContent={`import { link } from '@keenmate/svelte-spa-router/utils'
+					codeContent={`import { link } from '@keenmate/svelte-spa-router'
 import active from '@keenmate/svelte-spa-router/active'
 
 <!-- Basic link -->

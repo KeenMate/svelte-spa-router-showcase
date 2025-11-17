@@ -25,6 +25,7 @@ const config: PartialDocsConfig = {
 		main: [
 			{ label: 'Home', href: '/', icon: '🏠' },
 			{ label: 'Getting Started', href: '/getting-started', icon: '🚀' },
+			{ label: "What's New in v5", href: '/whats-new', icon: '🎉' },
 			{
 				label: 'Features',
 				href: '/features/routing-modes',
@@ -44,7 +45,9 @@ const config: PartialDocsConfig = {
 					{ label: 'Multi-Zone Routing', href: '/features/multi-zone' },
 					{ label: 'Hierarchical Routes', href: '/features/hierarchical-routes' },
 					{ label: 'Nested Routes', href: '/features/nested-routes' },
-					{ label: 'Route Metadata', href: '/features/metadata' }
+					{ label: 'Route Metadata', href: '/features/metadata' },
+					{ label: 'Debug Logging', href: '/features/logging' },
+					{ label: 'Error Handling', href: '/features/error-handling' }
 				]
 			},
 			{
@@ -52,6 +55,7 @@ const config: PartialDocsConfig = {
 				href: '/api',
 				icon: '📚'
 			},
+			{ label: 'Migration from v4', href: '/migration', icon: '⬆️' },
 			{
 				label: 'Examples',
 				href: '/examples',

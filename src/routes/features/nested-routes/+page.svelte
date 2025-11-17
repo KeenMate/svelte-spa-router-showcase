@@ -169,13 +169,13 @@ await push('adminUserDetail', { id: 123 })
 
 <h3>Enabling Hierarchical Mode</h3>
 <CodeBlock language="javascript" codeContent={`// main.js - before mounting app
-import { setHierarchicalRoutesEnabled } from '@keenmate/svelte-spa-router/utils'
+import { setHierarchicalRoutesEnabled } from '@keenmate/svelte-spa-router'
 
 setHierarchicalRoutesEnabled(true)`} />
 
 <h3>Inheritance Example</h3>
 <CodeBlock language="javascript" codeContent={`import { createHierarchy } from '@keenmate/svelte-spa-router/helpers/hierarchy'
-import { setHierarchicalRoutesEnabled } from '@keenmate/svelte-spa-router/utils'
+import { setHierarchicalRoutesEnabled } from '@keenmate/svelte-spa-router'
 
 // Enable hierarchical inheritance
 setHierarchicalRoutesEnabled(true)
@@ -241,7 +241,7 @@ const routes = {
 <p>Here's a real-world example with permissions, authorization, and nested routes:</p>
 
 <CodeBlock language="javascript" codeContent={`import { createHierarchy } from '@keenmate/svelte-spa-router/helpers/hierarchy'
-import { setHierarchicalRoutesEnabled } from '@keenmate/svelte-spa-router/utils'
+import { setHierarchicalRoutesEnabled } from '@keenmate/svelte-spa-router'
 
 setHierarchicalRoutesEnabled(true)
 

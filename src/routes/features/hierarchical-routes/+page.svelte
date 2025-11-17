@@ -34,7 +34,7 @@ import { DocLayout, CodeBlock } from '@keenmate/svelte-docs'
 <p>Enable hierarchical routes in your <code>main.js</code> before mounting the app:</p>
 
 <CodeBlock language="javascript" codeContent={`import { mount } from 'svelte'
-import { setHierarchicalRoutesEnabled } from '@keenmate/svelte-spa-router/utils'
+import { setHierarchicalRoutesEnabled } from '@keenmate/svelte-spa-router'
 import App from './App.svelte'
 
 // Enable hierarchical routes

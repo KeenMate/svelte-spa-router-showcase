@@ -24,8 +24,7 @@ import { DocLayout, CodeBlock } from '@keenmate/svelte-docs'
 			<CodeBlock
 				codeContent={`// main.js
 import { configurePermissions } from '@keenmate/svelte-spa-router/helpers/permissions'
-import { get } from 'svelte/store'
-import { currentUser } from './stores/auth'
+import { getCurrentUser } from './auth.svelte.js'
 
 configurePermissions({
   // Function to check if user has required permissions
@@ -51,7 +50,7 @@ configurePermissions({
   },
 
   // Function to get current user
-  getCurrentUser: () => get(currentUser),
+  getCurrentUser,
 
   // Handler for unauthorized access
   onUnauthorized: (detail) => {
@@ -228,8 +227,8 @@ import { link } from '@keenmate/svelte-spa-router'
 
 			<h4>Complete Permission Setup</h4>
 			<CodeBlock
-				codeContent={`// auth.js - User store
-export const currentUser = writable({
+				codeContent={`// auth.svelte.js - User state with Svelte 5 runes
+let currentUserState = $state({
   id: 1,
   name: 'John Doe',
   role: 'admin',
@@ -242,11 +241,18 @@ export const currentUser = writable({
   ]
 })
 
+export function getCurrentUser() {
+  return currentUserState
+}
+
+export function setCurrentUser(user) {
+  currentUserState = user
+}
+
 // main.js - Configure permissions
 import { configurePermissions } from '@keenmate/svelte-spa-router/helpers/permissions'
 import { push } from '@keenmate/svelte-spa-router'
-import { currentUser } from './stores/auth'
-import { get } from 'svelte/store'
+import { getCurrentUser } from './auth.svelte.js'
 
 configurePermissions({
   checkPermissions: (user, requirements) => {
@@ -263,7 +269,7 @@ configurePermissions({
 
     return true
   },
-  getCurrentUser: () => get(currentUser),
+  getCurrentUser,
   onUnauthorized: () => {
     push('/unauthorized')
   }
@@ -425,7 +431,7 @@ import { hasPermission } from '@keenmate/svelte-spa-router/helpers/permissions'
 
     return true
   },
-  getCurrentUser: () => get(currentUser),
+  getCurrentUser,
   onUnauthorized: () => push('/unauthorized')
 })`}
 				languageType="javascript"
@@ -476,10 +482,12 @@ import { hasPermission } from '@keenmate/svelte-spa-router/helpers/permissions'
 			<p>Combine permissions with your authentication system:</p>
 
 			<CodeBlock
-				codeContent={`// auth.js
-import { writable } from 'svelte/store'
+				codeContent={`// auth.svelte.js - Svelte 5 runes-based authentication
+let currentUserState = $state(null)
 
-export const currentUser = writable(null)
+export function getCurrentUser() {
+  return currentUserState
+}
 
 export async function login(username, password) {
   // Call your API
@@ -491,7 +499,7 @@ export async function login(username, password) {
 
   if (response.ok) {
     const user = await response.json()
-    currentUser.set(user)
+    currentUserState = user
     return true
   }
 
@@ -499,13 +507,13 @@ export async function login(username, password) {
 }
 
 export function logout() {
-  currentUser.set(null)
+  currentUserState = null
   push('/login')
 }
 
 // Check if user is authenticated
 export function isAuthenticated() {
-  return get(currentUser) !== null
+  return currentUserState !== null
 }`}
 				languageType="javascript"
 				titleText="Authentication integration"

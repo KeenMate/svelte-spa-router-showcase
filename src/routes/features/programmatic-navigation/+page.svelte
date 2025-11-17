@@ -11,9 +11,9 @@ import { DocLayout, CodeBlock } from '@keenmate/svelte-docs'
 		<section class="mb-5">
 			<h2 class="mb-4">Overview</h2>
 			<p class="lead">
-				The router provides three functions for programmatic navigation: <code>push()</code>,
-				<code>replace()</code>, and <code>pop()</code>. As of the latest version, <code>push()</code>
-				and <code>replace()</code> support multiple convenient input formats.
+				The router provides four functions for programmatic navigation: <code>push()</code>,
+				<code>replace()</code>, <code>pop()</code>, and <code>goBack()</code>. The <code>push()</code>
+				and <code>replace()</code> functions support multiple convenient input formats.
 			</p>
 		</section>
 
@@ -397,7 +397,7 @@ async function handleLogin(event) {
 			<CodeBlock
 				codeContent={`<script>
 import { push } from '@keenmate/svelte-spa-router'
-import { routeParams, querystring } from '@keenmate/svelte-spa-router/utils'
+import { routeParams, querystring } from '@keenmate/svelte-spa-router'
 
 // Get current page from query string
 const qs = $derived(querystring())

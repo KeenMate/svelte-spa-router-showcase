@@ -224,7 +224,7 @@ let { routeParams = {} } = $props()
 				codeContent={`<!-- App.svelte -->
 <script>
 import Router from '@keenmate/svelte-spa-router'
-import { location } from '@keenmate/svelte-spa-router/utils'
+import { location } from '@keenmate/svelte-spa-router'
 import { routes } from './routes'
 
 // Check if current route uses zones
@@ -650,7 +650,7 @@ export const routes = {
 // App.svelte
 <script>
 import Router from '@keenmate/svelte-spa-router'
-import { link, location } from '@keenmate/svelte-spa-router/utils'
+import { link, location } from '@keenmate/svelte-spa-router'
 import active from '@keenmate/svelte-spa-router/active'
 import { routes } from './routes'
 

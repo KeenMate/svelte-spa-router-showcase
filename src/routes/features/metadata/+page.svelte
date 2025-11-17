@@ -101,7 +101,7 @@ const userData = $derived(routeUserData())
 			<CodeBlock
 				codeContent={`<script>
 import { onMount } from 'svelte'
-import { routeParams } from '@keenmate/svelte-spa-router/utils'
+import { routeParams } from '@keenmate/svelte-spa-router'
 import { updateRouteMetadata } from '@keenmate/svelte-spa-router/helpers/route-metadata'
 
 let user = $state(null)
@@ -132,7 +132,7 @@ onMount(async () => {
 			<CodeBlock
 				codeContent={`<script>
 import { onMount } from 'svelte'
-import { routeParams } from '@keenmate/svelte-spa-router/utils'
+import { routeParams } from '@keenmate/svelte-spa-router'
 import {
   updateTitle,
   updateBreadcrumb
@@ -205,7 +205,7 @@ const routes = {
 // Component: DocumentLogs.svelte
 <script>
 import { onMount } from 'svelte'
-import { routeParams } from '@keenmate/svelte-spa-router/utils'
+import { routeParams } from '@keenmate/svelte-spa-router'
 import { updateTitle, updateBreadcrumb } from '@keenmate/svelte-spa-router/helpers/route-metadata'
 
 let document = $state(null)
@@ -310,7 +310,7 @@ const routes = {
 // DocumentDetail.svelte
 <script>
 import { onMount } from 'svelte'
-import { routeParams } from '@keenmate/svelte-spa-router/utils'
+import { routeParams } from '@keenmate/svelte-spa-router'
 import { hideLoading, updateTitle, updateBreadcrumb } from '@keenmate/svelte-spa-router/helpers/route-metadata'
 
 let document = $state(null)
@@ -356,7 +356,7 @@ onMount(async () => {
 // ProductDetail.svelte
 <script>
 import { onMount } from 'svelte'
-import { routeParams } from '@keenmate/svelte-spa-router/utils'
+import { routeParams } from '@keenmate/svelte-spa-router'
 import { updateRouteMetadata } from '@keenmate/svelte-spa-router/helpers/route-metadata'
 
 let product = $state(null)

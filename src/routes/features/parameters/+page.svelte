@@ -252,7 +252,7 @@ let { routeParams = {} } = $props()
 
 			<CodeBlock
 				codeContent={`<script>
-import { routeParams } from '@keenmate/svelte-spa-router/utils'
+import { routeParams } from '@keenmate/svelte-spa-router'
 
 // Get params reactively
 const routeParams = $derived(routeParams())
@@ -272,7 +272,7 @@ const userId = $derived(routeParams?.id)
 
 			<CodeBlock
 				codeContent={`<script lang="ts">
-import { routeParams } from '@keenmate/svelte-spa-router/utils'
+import { routeParams } from '@keenmate/svelte-spa-router'
 
 // Define parameter type
 interface UserParams {
