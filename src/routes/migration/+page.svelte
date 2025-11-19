@@ -314,7 +314,7 @@ import { routeParams } from '@keenmate/svelte-spa-router'`}
 					<li>☐ Replace all <code>$location</code>, <code>$params</code>, <code>$querystring</code> with function calls</li>
 					<li>☐ Rename <code>params</code> to <code>routeParams</code></li>
 					<li>☐ Update Router event props to camelCase</li>
-					<li>☐ Replace <code>export let params</code> with <code>let { routeParams } = $props()</code></li>
+					<li>☐ Replace <code>export let params</code> with <code>let {'{ routeParams }'} = $props()</code></li>
 					<li>☐ Update logger API calls</li>
 					<li>☐ Update permission system configuration</li>
 					<li>☐ Remove /stores import paths</li>
