@@ -176,6 +176,144 @@ setCategoryLevel('ROUTER:PERMISSIONS', 'warn')`}
 			/>
 		</section>
 
+		<!-- Browser Console API -->
+		<section class="mb-5">
+			<h2 class="mb-4">Browser Console API</h2>
+			<p class="lead">
+				The router exposes a global API at <code>window.components['svelte-spa-router']</code> for runtime
+				debugging and introspection directly from your browser's DevTools console.
+			</p>
+
+			<div class="alert alert-info">
+				<strong>No code changes required!</strong> Toggle logging, check versions, and debug issues
+				in production builds without modifying or rebuilding your application.
+			</div>
+
+			<h4 class="mt-4">Check Library Version</h4>
+			<p>Get the current router version at runtime:</p>
+			<CodeBlock
+				codeContent={`// Browser console
+window.components['svelte-spa-router'].version()
+// "5.1.0"`}
+				languageType="javascript"
+				titleText="Check version in production"
+			/>
+
+			<h4 class="mt-4">View Package Metadata</h4>
+			<CodeBlock
+				codeContent={`// Browser console
+window.components['svelte-spa-router'].config
+
+// Returns:
+// {
+//   name: "@keenmate/svelte-spa-router",
+//   version: "5.1.0",
+//   author: "KeenMate (https://keenmate.com)",
+//   license: "MIT",
+//   repository: "https://github.com/keenmate/svelte-spa-router",
+//   homepage: "https://github.com/keenmate/svelte-spa-router#readme"
+// }`}
+				languageType="javascript"
+				titleText="Package metadata"
+			/>
+
+			<h4 class="mt-4">Enable Logging from Console</h4>
+			<p>Toggle debug logging on and off without code changes:</p>
+			<CodeBlock
+				codeContent={`// Enable all debug logging
+window.components['svelte-spa-router'].logging.enableLogging()
+
+// Disable all logging
+window.components['svelte-spa-router'].logging.disableLogging()
+
+// Set global log level
+window.components['svelte-spa-router'].logging.setLogLevel('debug')
+window.components['svelte-spa-router'].logging.setLogLevel('warn')
+window.components['svelte-spa-router'].logging.setLogLevel('silent')`}
+				languageType="javascript"
+				titleText="Toggle logging from console"
+			/>
+
+			<h4 class="mt-4">Control Specific Categories</h4>
+			<CodeBlock
+				codeContent={`// Enable navigation logging only
+window.components['svelte-spa-router'].logging.setCategoryLevel('ROUTER:NAVIGATION', 'debug')
+
+// Enable permissions with warnings only
+window.components['svelte-spa-router'].logging.setCategoryLevel('ROUTER:PERMISSIONS', 'warn')
+
+// Disable scroll logging
+window.components['svelte-spa-router'].logging.setCategoryLevel('ROUTER:SCROLL', 'silent')`}
+				languageType="javascript"
+				titleText="Per-category control from console"
+			/>
+
+			<h4 class="mt-4">List Available Categories</h4>
+			<CodeBlock
+				codeContent={`// Get all logging categories
+window.components['svelte-spa-router'].logging.getCategories()
+
+// Returns:
+// [
+//   "ROUTER",
+//   "ROUTER:NAVIGATION",
+//   "ROUTER:SCROLL",
+//   "ROUTER:GUARDS",
+//   "ROUTER:CONDITIONS",
+//   "ROUTER:HIERARCHY",
+//   "ROUTER:PERMISSIONS",
+//   "ROUTER:ROUTES",
+//   "ROUTER:ZONES",
+//   "ROUTER:METADATA",
+//   "ROUTER:ERROR_HANDLER",
+//   "ROUTER:FILTERS"
+// ]`}
+				languageType="javascript"
+				titleText="List all categories"
+			/>
+
+			<h4 class="mt-4">Practical Use Cases</h4>
+
+			<div class="alert alert-secondary">
+				<strong>Debug Production Issues:</strong><br/>
+				User reports navigation not working? Open console and enable navigation logging:
+				<code class="d-block mt-2">window.components['svelte-spa-router'].logging.setCategoryLevel('ROUTER:NAVIGATION', 'debug')</code>
+			</div>
+
+			<div class="alert alert-secondary">
+				<strong>Test Permission Changes:</strong><br/>
+				Testing permission logic? Enable permission logging on the fly:
+				<code class="d-block mt-2">window.components['svelte-spa-router'].logging.setCategoryLevel('ROUTER:PERMISSIONS', 'debug')</code>
+			</div>
+
+			<div class="alert alert-secondary">
+				<strong>Version Compatibility:</strong><br/>
+				Check if the deployed version matches your expectations:
+				<code class="d-block mt-2">window.components['svelte-spa-router'].version()</code>
+			</div>
+
+			<div class="alert alert-secondary">
+				<strong>Explore Available Categories:</strong><br/>
+				Not sure which category to enable? List them all:
+				<code class="d-block mt-2">window.components['svelte-spa-router'].logging.getCategories()</code>
+			</div>
+
+			<h4 class="mt-4">Benefits</h4>
+			<ul>
+				<li><strong>No rebuild required</strong> - Toggle logging in production builds</li>
+				<li><strong>Runtime version checking</strong> - Verify deployed library version</li>
+				<li><strong>Quick troubleshooting</strong> - Enable logging during user sessions</li>
+				<li><strong>TypeScript support</strong> - Full autocompletion in browser console</li>
+				<li><strong>SSR-safe</strong> - Only available in browser environment</li>
+				<li><strong>Namespace-safe</strong> - Uses <code>window.components</code> shared namespace</li>
+			</ul>
+
+			<div class="alert alert-warning">
+				<strong>Note:</strong> The global API is available only in browser environments.
+				It will be <code>undefined</code> during server-side rendering (SSR).
+			</div>
+		</section>
+
 		<!-- Common Debugging Scenarios -->
 		<section class="mb-5">
 			<h2 class="mb-4">Common Debugging Scenarios</h2>
