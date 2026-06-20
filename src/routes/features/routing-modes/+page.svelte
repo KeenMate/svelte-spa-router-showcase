@@ -7,6 +7,20 @@ import { DocLayout, ShowcaseSection, CodeBlock } from '@keenmate/svelte-docs'
 	descriptionText="Understanding hash mode and history mode routing">
 
 	<div class="py-1">
+		<div class="alert alert-info mb-4">
+			<strong>Live demos — same app, different mode:</strong>
+			<ul class="mb-0 mt-2">
+				<li>
+					<a href="https://history.svelte-spa-router.keenmate.dev" target="_blank">History mode</a> —
+					clean URLs (<code>/about</code>)
+				</li>
+				<li>
+					<a href="https://hash.svelte-spa-router.keenmate.dev" target="_blank">Hash mode</a> —
+					hash URLs (<code>#/about</code>)
+				</li>
+			</ul>
+		</div>
+
 		<!-- Introduction -->
 		<section class="mb-5">
 			<h2 class="mb-4">Two Routing Modes</h2>

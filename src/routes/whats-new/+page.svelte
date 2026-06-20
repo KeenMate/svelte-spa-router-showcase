@@ -3,394 +3,231 @@ import { DocLayout, CodeBlock } from '@keenmate/svelte-docs'
 </script>
 
 <DocLayout
-	titleText="What's New in v5"
-	descriptionText="Discover the powerful new features in svelte-spa-router v5.0">
+	titleText="What's New"
+	descriptionText="Highlights from the two most recent releases">
 
 	<div class="py-1">
-		<!-- Introduction -->
 		<section class="mb-5">
-			<h2 class="mb-4">Welcome to v5.0</h2>
 			<p class="lead">
-				Version 5.0 is a complete rewrite for Svelte 5, bringing modern runes-based reactivity,
-				powerful new features, and significant improvements to the developer experience.
+				This page tracks the two most recent releases. For v5.2.1 (bare-function routes unblocked on
+				Svelte 5.5+ / Vite 7), v5.2.0-rc02 (reactive permissions,
+				<code>revalidateCurrentRoute()</code>, error-toast removal), v5.2.0-rc01
+				(<code>defineRoutes()</code>), and the full history including v5.1.x and v5.0.x, see
+				<a href="https://github.com/keenmate/svelte-spa-router/blob/main/CHANGELOG.md" target="_blank">CHANGELOG.md</a>.
 			</p>
-			<div class="alert alert-success">
-				This is the first stable release of svelte-spa-router for Svelte 5, providing enterprise-grade
-				routing with comprehensive features for building complex single-page applications.
-			</div>
 		</section>
 
-		<!-- Svelte 5 Runes -->
+		<!-- v5.3.0-rc02 -->
 		<section class="mb-5">
-			<h2 class="mb-4">🎯 Built for Svelte 5 with Runes</h2>
+			<h2 class="mb-4">v5.3.0-rc02</h2>
+
+			<h4 class="mt-4">BREAKING: <code>NavTreeNode.isHidden</code> renamed to <code>hidden</code></h4>
 			<p>
-				The entire router has been rewritten using Svelte 5's new runes system (<code>$state</code>,
-				<code>$derived</code>, <code>$effect</code>), providing better performance and more predictable reactivity.
+				Aligns with the KeenMate web-components naming convention for data-model boolean fields,
+				which use bare HTML-attribute names (<code>hidden</code>, <code>disabled</code>,
+				<code>selected</code>, <code>checked</code>) on single-item shapes. Mirrors the same rename
+				that landed in <code>@keenmate/web-multiselect</code>
+				(<code>MultiSelectOption.isDisabled</code> → <code>disabled</code>). The helper predicate
+				<code>isNodeHidden(node)</code> keeps its <code>is*</code> prefix because it's a function,
+				not a field. Migration is a find-and-replace.
 			</p>
-
 			<CodeBlock
-				codeContent={`import { location, routeParams, querystring } from '@keenmate/svelte-spa-router'
+				codeContent={`// ❌ rc01
+const navTree = [
+  { path: '/labs', title: 'Labs', isHidden: () => !import.meta.env.DEV }
+]
 
-// Access state with $derived
-const currentPath = $derived(location())
-const params = $derived(routeParams())
-const query = $derived(querystring())
-
-// React to changes with $effect
-$effect(() => {
-  console.log('Route changed:', currentPath)
-})`}
+// ✅ rc02
+const navTree = [
+  { path: '/labs', title: 'Labs', hidden: () => !import.meta.env.DEV }
+]`}
 				languageType="javascript"
-				titleText="Modern runes-based API"
-			/>
-		</section>
-
-		<!-- Referrer Tracking -->
-		<section class="mb-5">
-			<h2 class="mb-4">🔄 Automatic Referrer Tracking</h2>
-			<p>
-				The router now automatically tracks where users came from, including route parameters,
-				query strings, route names, and scroll positions.
-			</p>
-
-			<CodeBlock
-				codeContent={`import { navigationContext, goBack } from '@keenmate/svelte-spa-router'
-
-const navContext = $derived(navigationContext())
-const referrer = $derived(navContext?.referrer)
-
-// Referrer contains:
-// - location: '/previous/route'
-// - querystring: 'tab=settings'
-// - params: { id: '123' }
-// - routeName: 'documentDetail'
-// - scrollX: 0
-// - scrollY: 456
-
-// Navigate back with automatic scroll restoration
-function handleBack() {
-  goBack()  // Restores exact scroll position!
-}`}
-				languageType="javascript"
-				titleText="Referrer tracking with scroll restoration"
+				titleText="isHidden → hidden"
 			/>
 
-			<p class="mt-3">
-				<a href="/features/referrer-tracking">Learn more about referrer tracking →</a>
-			</p>
-		</section>
-
-		<!-- Category-Based Logging -->
-		<section class="mb-5">
-			<h2 class="mb-4">🐛 Category-Based Debug Logging</h2>
+			<h4 class="mt-4"><code>disabled</code> now renders forbidden in BOTH filter modes</h4>
 			<p>
-				A comprehensive logging system with 12 hierarchical categories, color-coded output,
-				and timestamps makes debugging routing issues easier than ever.
+				Previously, <code>disabled: true</code> nodes were dropped in <code>mode: 'hide'</code> (same
+				outcome as a permission failure). New semantic: <code>disabled</code> is a
+				<em>product-level placeholder signal</em> ("coming soon", "in private beta"), not a
+				user-permission concern — so it stays visible regardless of the consumer's hide/disable
+				preference. Ancestor permission denial still hides disabled descendants (you can't see a
+				placeholder in a section you can't enter).
 			</p>
 
+			<h4 class="mt-4">New <code>FilterOptions.disabledClassName</code></h4>
+			<p>
+				Lets consumers style "coming soon" placeholders distinctly from permission-denied items even
+				though both still render through the same forbidden branch. When set, nodes whose forbidden
+				state comes from <code>disabled: true</code> get this class on
+				<code>_forbiddenClassName</code> instead of the default <code>forbiddenClassName</code>.
+				When a node is both <code>disabled</code> AND permission-denied (rare),
+				<code>disabledClassName</code> wins — the product-level signal is the more permanent one.
+				Cascade parents (forbidden only because every visible child is) keep
+				<code>forbiddenClassName</code>. Default <code>undefined</code> → falls back to
+				<code>forbiddenClassName</code>; fully backward compatible.
+			</p>
 			<CodeBlock
-				codeContent={`import { enableLogging, setCategoryLevel } from '@keenmate/svelte-spa-router/logger'
-
-// Enable all debug logging
-if (import.meta.env.DEV) {
-  enableLogging()
-}
-
-// Or enable specific categories
-setCategoryLevel('ROUTER:NAVIGATION', 'debug')
-setCategoryLevel('ROUTER:PERMISSIONS', 'warn')
-setCategoryLevel('ROUTER:SCROLL', 'info')`}
-				languageType="javascript"
-				titleText="Fine-grained logging control"
-			/>
-
-			<p class="mt-3">Categories include: ROUTER, ROUTER:NAVIGATION, ROUTER:SCROLL, ROUTER:GUARDS,
-			ROUTER:PERMISSIONS, and 7 more for comprehensive debugging.</p>
-
-			<p>
-				<a href="/features/logging">Learn more about debug logging →</a>
-			</p>
-		</section>
-
-		<!-- Global Error Handling -->
-		<section class="mb-5">
-			<h2 class="mb-4">⚠️ Global Error Handling</h2>
-			<p>
-				Catch and recover from unhandled errors automatically with configurable recovery strategies,
-				restart loop prevention, and beautiful error UI.
-			</p>
-
-			<CodeBlock
-				codeContent={`import { configureGlobalErrorHandler } from '@keenmate/svelte-spa-router/helpers/error-handler'
-import { GlobalErrorHandler } from '@keenmate/svelte-spa-router/helpers/GlobalErrorHandler'
-
-// Configure error handling
-configureGlobalErrorHandler({
-  strategy: 'navigateSafe',  // or 'restart', 'showError', 'custom'
-  safeRoute: '/',
-  maxRestarts: 3,
-  showToast: true
-})
-
-// Add to App.svelte
-<GlobalErrorHandler />
-<Router {routes} />`}
-				languageType="javascript"
-				titleText="Automatic error recovery"
-			/>
-
-			<p class="mt-3">
-				<a href="/features/error-handling">Learn more about error handling →</a>
-			</p>
-		</section>
-
-		<!-- Hierarchical Routes -->
-		<section class="mb-5">
-			<h2 class="mb-4">🌳 Hierarchical Route Inheritance</h2>
-			<p>
-				Child routes can now automatically inherit breadcrumbs, permissions, conditions, and
-				authorization callbacks from parent routes, reducing code duplication.
-			</p>
-
-			<CodeBlock
-				codeContent={`import { setHierarchicalRoutesEnabled } from '@keenmate/svelte-spa-router'
-import { createRoute } from '@keenmate/svelte-spa-router/wrap'
-
-setHierarchicalRoutesEnabled(true)
-
-const routes = {
-  '/documents': createRoute({
-    component: Documents,
-    breadcrumbs: [{ label: 'Home' }, { label: 'Documents' }],
-    permissions: { any: ['read'] }
-  }),
-
-  // Child automatically inherits parent breadcrumbs + permissions
-  '/documents/:id': createRoute({
-    component: DocumentDetail,
-    breadcrumbs: [{ label: 'Detail' }],
-    // Effective: [Home, Documents, Detail]
-    // Must have both 'read' (parent) AND 'documents.view' (child)
-    permissions: { any: ['documents.view'] }
+				codeContent={`const visibleTree = $derived(
+  filterByPermissions(navTree, {
+    mode: 'disable',
+    forbiddenClassName: 'forbidden',        // red strike-through (permission denied)
+    disabledClassName:  'unavailable'       // amber, no strike-through ("coming soon")
   })
-}`}
+)`}
 				languageType="javascript"
-				titleText="Route inheritance system"
+				titleText="Distinct styling for disabled vs forbidden"
 			/>
 
+			<h4 class="mt-4">Example: rich tooltips wired into the top navbar of <code>/nav-tree-demo</code></h4>
+			<p>
+				The Floating UI <code>RichTooltip</code> wrapper now also wraps the matching topbar items
+				(Admin / Settings / Marketplace) with <code>placement="top-start"</code> so the popovers
+				fly upwards out of the horizontal bar. Mirrors the sidebar pattern — one
+				<code>richTooltipContent</code> snippet powers both layouts; nodes opt in via the
+				<code>meta.docsUrl</code> convention.
+			</p>
+
+			<h4 class="mt-4">Example: route-info bar promoted to the top of the page</h4>
+			<p>
+				Was sitting below the blue header with <code>position: sticky; top: 70px</code>. Moved to be
+				the first child of <code>.app</code> with <code>position: sticky; top: 0</code>, so it sits
+				in normal flow initially and pins to the viewport top once the user scrolls past the header.
+				Cosmetic-only — no consumer impact.
+			</p>
+		</section>
+
+		<!-- v5.3.0-rc01 -->
+		<section class="mb-5">
+			<h2 class="mb-4">v5.3.0-rc01</h2>
+
+			<h4 class="mt-4"><code>subtree: true</code> on <code>use:active</code> — sidebar parent/child highlighting from one action</h4>
+			<p>
+				Registers both an exact-<code>href</code> match <em>and</em> a <code>/href/*</code> descendants
+				pattern from a single action call, derived from the link's <code>href</code>. Sidebar parents
+				stay highlighted on their own index page <em>and</em> every nested URL without writing a regex
+				or stacking two <code>use:active</code> calls by hand. Pair with the new
+				<code>subtreeClassName</code> to style "parent of an active child" differently from "really
+				active".
+			</p>
+			<CodeBlock
+				codeContent={`<!-- One action, two truth tables: exact AND descendants -->
+<a
+  href="/docs"
+  use:link
+  use:active={{ subtree: true, className: 'link-active', subtreeClassName: 'sublink-active' }}
+>Docs</a>
+
+<!-- /docs       → 'link-active' (exact)
+     /docs/intro → 'sublink-active' (descendant)
+     /other      → no class -->`}
+				languageType="svelte"
+				titleText="One use:active call for parent + nested highlight"
+			/>
+
+			<h4 class="mt-4"><code>helpers/nav-tree</code> — permission-aware filtering for tree-shaped menus</h4>
+			<p>
+				New module exported at <code>@keenmate/svelte-spa-router/helpers/nav-tree</code>. Walks a route
+				tree, runs <code>hasPermission()</code> per node, and either drops inaccessible nodes
+				(<code>mode: 'hide'</code>) or marks them with <code>_forbidden: true</code> for styled
+				disabled rendering (<code>mode: 'disable'</code>). Ancestor permissions enforced via sequential
+				checks (one per level), not by merging spec objects — mirrors the router's hierarchical-mode
+				pipeline. Plus an <code>isHidden: boolean | (node) =&gt; boolean</code> getter that's
+				always-destructive in both modes — read a <code>$state</code> rune or a feature flag inside
+				the getter and the whole filter result becomes reactive.
+			</p>
+			<CodeBlock
+				codeContent={`import { filterByPermissions } from '@keenmate/svelte-spa-router/helpers/nav-tree'
+
+const navTree = [
+  { path: '/', title: 'Home' },
+  { path: '/admin', title: 'Admin', permissions: { any: ['admin'] }, children: [
+    { path: '/admin/users', title: 'Users' }   // inherits admin
+  ]},
+  { path: '/labs', title: 'Labs', isHidden: () => !import.meta.env.DEV }
+]
+
+// Inside a component:
+const visibleTree = $derived(filterByPermissions(navTree, { mode: 'hide' }))
+// Switching the user re-runs filterByPermissions automatically — no wiring.`}
+				languageType="javascript"
+				titleText="One tree drives routes + nav, with permissions"
+			/>
+
+			<h4 class="mt-4">Stacked <code>use:active</code> actions cooperate cleanly</h4>
+			<p>
+				Two <code>use:active</code> calls on one element used to fight each other: the last invocation
+				unconditionally toggled <em>its own</em> result, so
+				<code>use:active use:active={`{'/foo/*'}`}</code> silently broke on the bare path (the prefix
+				action stripped the class the default action just added). Replaced the internal
+				<code>toggleClasses</code> with <code>syncClassesForNode</code> that aggregates across every
+				entry — an active class is present iff <em>any</em> entry's pattern matches. The new
+				<code>subtree</code> option above rides on this aggregation model.
+			</p>
+
+			<h4 class="mt-4"><code>/nav-tree-demo</code> showcase + <code>&lt;NavLink&gt;</code> reference</h4>
+			<p>
+				The example app's new tree-driven demo (<code>/nav-tree-demo</code>) walks a permission-filtered
+				tree to render its sidebar AND its navbar AND its routes — one source of truth drives all three.
+				Three live toggles in the sidebar — user, hide/disable mode, and a feature-flag rune — let you
+				see every filter behavior change in place with no page reload. The
+				<code>&lt;NavLink&gt;</code> wrapper around <code>use:link</code> + <code>use:active</code>
+				is a copy-paste reference for handling <code>subtree</code> and <code>_forbidden</code>.
+				Covered end-to-end by 9 new Playwright tests.
+			</p>
+
+			<h4 class="mt-4">AI-facing docs refreshed</h4>
+			<p>
+				The previous <code>ai/link-actions.txt</code> incorrectly claimed
+				<code>&lt;a href="/docs/*" use:active&gt;</code> matched bare <code>/docs</code>. It doesn't:
+				<code>regexparam@2.0.2</code> compiles <code>/docs/*</code> to a pattern requiring the slash
+				after "docs", so bare <code>/docs</code> falls through. Rewritten as "descendants only" with
+				the quirk explained, plus new sections covering branch matching (<code>subtree</code> vs regex
+				vs stacked actions), sidebar-with-submenu, two-class parent/child pattern, generating nav from
+				a route tree, and filtering by permissions. Same expansion propagated to this site's
+				<a href="/features/link-actions">Link actions</a> feature page — including a Reactivity section
+				explaining the <code>$derived(filterByPermissions(...))</code> chain.
+			</p>
+		</section>
+
+		<!-- Migration nudge -->
+		<section class="mb-5">
+			<h2 class="mb-4">Upgrading from older versions</h2>
+			<p>
+				<strong>v5.3.0-rc01 → rc02</strong> has one find-and-replace: <code>isHidden:</code> →
+				<code>hidden:</code> in your nav-tree definitions. Everything else is additive (the
+				<code>disabled</code> semantic change and the new <code>disabledClassName</code> option don't
+				require any consumer-side changes).
+			</p>
 			<p class="mt-3">
-				<a href="/features/hierarchical-routes">Learn more about hierarchical routes →</a>
+				<strong>v5.2.x → v5.3.0</strong> requires no code changes beyond the rc01 → rc02 rename
+				above. Stacked <code>use:active</code> cooperation is backward compatible for the
+				single-action-per-node case (the overwhelmingly common case). Pick up <code>subtree: true</code>
+				and <code>helpers/nav-tree</code> when you're ready.
 			</p>
-		</section>
-
-		<!-- Tree Route Structure -->
-		<section class="mb-5">
-			<h2 class="mb-4">📁 Tree/Nested Route Structure</h2>
-			<p>
-				Define deeply nested routes using a tree structure instead of flat definitions,
-				perfect for complex applications with many levels of nesting.
-			</p>
-
-			<CodeBlock
-				codeContent={`import { createHierarchy } from '@keenmate/svelte-spa-router/helpers/hierarchy'
-
-const routes = createHierarchy({
-  '/admin': {
-    component: AdminLayout,
-    permissions: { any: ['admin'] },
-    children: {
-      'users': {
-        component: AdminUsers,
-        children: {
-          ':id': {
-            component: AdminUserDetail,
-            children: {
-              'permissions': { component: UserPermissions },
-              'activity': { component: UserActivity }
-            }
-          }
-        }
-      }
-    }
-  }
-})
-
-// Creates: /admin, /admin/users, /admin/users/:id,
-//          /admin/users/:id/permissions, /admin/users/:id/activity`}
-				languageType="javascript"
-				titleText="Nested route definitions"
-			/>
-
 			<p class="mt-3">
-				<a href="/features/nested-routes">Learn more about tree structure →</a>
+				<strong>v5.0 / v5.1 → v5.2.x</strong> introduced a breaking removal in v5.2.0-rc02: the
+				built-in error toast (<code>showToast</code>) is gone from <code>GlobalErrorHandler</code> —
+				wire your own toast library inside the <code>onError</code> callback. See the
+				<a href="/migration">Migration Guide</a> for the rc02 details and the major v4 → v5 breakages.
 			</p>
 		</section>
 
-		<!-- Enhanced Permissions -->
+		<!-- Install -->
 		<section class="mb-5">
-			<h2 class="mb-4">🔐 Enhanced Permission System</h2>
-			<p>
-				The unauthorized handling system has been redesigned to respect routing modes and
-				support component-based display without changing URLs.
-			</p>
-
+			<h2 class="mb-4">Install</h2>
 			<CodeBlock
-				codeContent={`import { configurePermissions } from '@keenmate/svelte-spa-router/helpers/permissions'
-import UnauthorizedPage from './UnauthorizedPage.svelte'
-
-configurePermissions({
-  getCurrentUser,
-  checkPermissions,
-
-  // Component-based (NEW) - show without URL change
-  unauthorizedBehavior: 'component',
-  unauthorizedComponent: UnauthorizedPage,
-
-  // OR navigate to route (respects hash/history mode)
-  unauthorizedBehavior: 'navigate',
-  unauthorizedRoute: '/unauthorized'
-})`}
-				languageType="javascript"
-				titleText="Improved unauthorized handling"
-			/>
-
-			<p class="mt-3">
-				<a href="/features/permissions">Learn more about permissions →</a>
-			</p>
-		</section>
-
-		<!-- Other Improvements -->
-		<section class="mb-5">
-			<h2 class="mb-4">✨ Additional Improvements</h2>
-
-			<h4>goBack() Helper</h4>
-			<p>
-				Simplified navigation to previous route with automatic scroll position restoration:
-			</p>
-			<CodeBlock
-				codeContent={`import { goBack } from '@keenmate/svelte-spa-router'
-
-// Automatically navigates to referrer with scroll restoration
-<button onclick={goBack}>← Go Back</button>`}
-				languageType="javascript"
-			/>
-
-			<h4 class="mt-4">Strict Parameter Replacement</h4>
-			<p>
-				Missing route parameters are now replaced with a configurable placeholder (default: "N-A")
-				instead of being silently removed, making it easier to spot missing data:
-			</p>
-			<CodeBlock
-				codeContent={`import { setParamReplacementPlaceholder } from '@keenmate/svelte-spa-router'
-
-setParamReplacementPlaceholder('N-A')
-
-// Route: /users/:userId/:section
-push('userProfile', { userId: 123 })  // Missing section
-// Result: /users/123/N-A (easy to spot!)
-
-// Also triggers onNotFound callback for tracking`}
-				languageType="javascript"
-			/>
-
-			<h4 class="mt-4">Consistent API Naming</h4>
-			<p>All Router event props now use camelCase for consistency with JavaScript conventions:</p>
-			<ul>
-				<li><code>onRouteLoading</code> (was <code>onrouteLoading</code>)</li>
-				<li><code>onRouteLoaded</code> (was <code>onrouteLoaded</code>)</li>
-				<li><code>onConditionsFailed</code> (was <code>onconditionsFailed</code>)</li>
-			</ul>
-
-			<h4 class="mt-4">Improved TypeScript Support</h4>
-			<p>
-				Enhanced type definitions with better generics support for typed route params,
-				query strings, and navigation context.
-			</p>
-		</section>
-
-		<!-- Performance -->
-		<section class="mb-5">
-			<h2 class="mb-4">⚡ Performance</h2>
-			<ul>
-				<li><strong>Lighter weight:</strong> Runes-based implementation is more efficient than stores</li>
-				<li><strong>Zero overhead logging:</strong> Debug logging has negligible impact when disabled</li>
-				<li><strong>Better tree-shaking:</strong> Improved bundle size in production builds</li>
-				<li><strong>Faster route matching:</strong> Optimized pattern matching with regexparam</li>
-			</ul>
-		</section>
-
-		<!-- Developer Experience -->
-		<section class="mb-5">
-			<h2 class="mb-4">🛠️ Developer Experience</h2>
-
-			<h4>Better Error Messages</h4>
-			<p>Clear, actionable error messages help you identify and fix issues quickly:</p>
-			<div class="alert alert-danger">
-				<code>Route "unknownRoute" not found in registry. Registered routes: [ 'home', 'about', 'user' ]</code>
-			</div>
-
-			<h4>Comprehensive Documentation</h4>
-			<ul>
-				<li>Complete API reference with all functions documented</li>
-				<li>Detailed feature guides with real-world examples</li>
-				<li>Migration guide from v4 to v5</li>
-				<li>Troubleshooting sections for common issues</li>
-			</ul>
-
-			<h4>Live Examples</h4>
-			<p>
-				Two full example applications demonstrate all features:
-			</p>
-			<ul>
-				<li>
-					<a href="https://hash.svelte-spa-router.keenmate.dev" target="_blank">Hash mode demo</a> -
-					Traditional #/path routing
-				</li>
-				<li>
-					<a href="https://history.svelte-spa-router.keenmate.dev" target="_blank">History mode demo</a> -
-					Clean URL routing
-				</li>
-			</ul>
-		</section>
-
-		<!-- Backwards Compatibility -->
-		<section class="mb-5">
-			<h2 class="mb-4">⚠️ Breaking Changes</h2>
-			<p>
-				While v5.0 includes breaking changes, the core routing API remains familiar.
-				Most changes are straightforward find-and-replace operations:
-			</p>
-			<ul>
-				<li><code>$location</code> → <code>location()</code></li>
-				<li><code>$params</code> → <code>routeParams()</code></li>
-				<li><code>onrouteLoaded</code> → <code>onRouteLoaded</code></li>
-				<li><code>setDebugLoggingEnabled()</code> → <code>enableLogging()</code></li>
-			</ul>
-
-			<p class="mt-3">
-				See the <a href="/migration">Migration Guide</a> for complete upgrade instructions.
-			</p>
-		</section>
-
-		<!-- Getting Started -->
-		<section class="mb-5">
-			<h2 class="mb-4">🚀 Get Started</h2>
-			<p>Ready to try v5.0? Install it now:</p>
-
-			<CodeBlock
-				codeContent={`npm install @keenmate/svelte-spa-router@5`}
+				codeContent="npm install @keenmate/svelte-spa-router@5.3.0-rc02"
 				languageType="bash"
 			/>
-
-			<p class="mt-3">Then check out the <a href="/getting-started">Getting Started guide</a> to build your first route!</p>
+			<p class="mt-3">
+				Then jump to the <a href="/getting-started">Getting Started</a> guide.
+			</p>
 		</section>
 
 		<!-- Feedback -->
 		<section class="mb-5">
-			<h2 class="mb-4">💬 Feedback Welcome</h2>
-			<p>
-				Found a bug? Have a feature request? We'd love to hear from you:
-			</p>
+			<h2 class="mb-4">Feedback</h2>
 			<ul>
 				<li>
 					<a href="https://github.com/keenmate/svelte-spa-router/issues" target="_blank">

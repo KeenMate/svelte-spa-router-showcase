@@ -7,6 +7,14 @@ import { DocLayout, CodeBlock } from '@keenmate/svelte-docs'
 	descriptionText="Dynamic routing with named parameters and wildcards">
 
 	<div class="py-1">
+		<div class="alert alert-info mb-4">
+			<strong>Live demo:</strong>
+			<a href="https://history.svelte-spa-router.keenmate.dev/route-data-demo" target="_blank">
+				Open <code>/route-data-demo</code> →
+			</a>
+			Interactive examples with named params, optional params, wildcards, and static-prefix routes.
+		</div>
+
 		<!-- Introduction -->
 		<section class="mb-5">
 			<h2 class="mb-4">Dynamic Routes</h2>

@@ -7,6 +7,15 @@ import { DocLayout, CodeBlock } from '@keenmate/svelte-docs'
 	descriptionText="Load different components into multiple layout areas based on the current route">
 
 	<div class="py-1">
+		<div class="alert alert-info mb-4">
+			<strong>Live demo:</strong>
+			<a href="https://history.svelte-spa-router.keenmate.dev/multi-zone-demo" target="_blank">
+				Open <code>/multi-zone-demo</code> →
+			</a>
+			Then navigate into <code>/products</code>, <code>/users</code>, or <code>/orders</code> to see
+			the sidebar / main / panel zones swap content independently for each category.
+		</div>
+
 		<!-- Introduction -->
 		<section class="mb-5">
 			<h2 class="mb-4">What is Multi-Zone Routing?</h2>
@@ -664,9 +673,9 @@ const isZoneRoute = $derived(
   <header>
     <h1>My Application</h1>
     <nav>
-      <a href="/" use:link use:active>Home</a>
-      <a href="/products" use:link use:active>Products</a>
-      <a href="/users" use:link use:active>Users</a>
+      <a href="/">Home</a>
+      <a href="/products">Products</a>
+      <a href="/users">Users</a>
     </nav>
   </header>
 

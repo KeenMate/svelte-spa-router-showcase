@@ -3,16 +3,169 @@ import { DocLayout, CodeBlock } from '@keenmate/svelte-docs'
 </script>
 
 <DocLayout
-	titleText="Migration from v4 to v5"
-	descriptionText="Complete guide to upgrading from v4.x to v5.0">
+	titleText="Migration Guide"
+	descriptionText="Upgrading between versions of @keenmate/svelte-spa-router">
 
 	<div class="py-1">
-		<!-- Introduction -->
+		<!-- Quick chooser -->
 		<section class="mb-5">
-			<h2 class="mb-4">Overview</h2>
+			<h2 class="mb-4">Pick your starting point</h2>
+			<p class="lead">
+				Jump to the section that matches the version you're upgrading <em>from</em>.
+			</p>
+			<ul>
+				<li><a href="#v5-to-v5">Upgrading within v5.x</a> — already on v5.0 or later, moving to v5.3.0-rc02</li>
+				<li><a href="#v4-to-v5">Upgrading from v4.x to v5.0</a> — full rewrite to Svelte 5 runes</li>
+			</ul>
+		</section>
+
+		<!-- v5.x → v5.3 -->
+		<section class="mb-5" id="v5-to-v5">
+			<h2 class="mb-4">Upgrading within v5.x (→ v5.3.0-rc02)</h2>
+			<p class="lead">
+				Most v5.x → v5.3 upgrades require no code changes. There is one small rename
+				introduced in v5.3.0-rc02 (covered first), plus an older v5.2.0-rc02 breaking removal
+				(covered further down).
+			</p>
+
+			<h3 class="mt-4">⚠️ v5.3.0-rc01 → rc02 — <code>isHidden</code> renamed to <code>hidden</code></h3>
+			<p>
+				If you adopted <code>helpers/nav-tree</code> during rc01 and used the
+				<code>isHidden</code> field on any nav-tree node, rename it to <code>hidden</code>.
+				The shape, semantics, and getter reactivity are all unchanged — it's a pure naming
+				alignment with the KeenMate web-components convention (bare HTML-attribute names on
+				data-model boolean fields, mirroring the same rename in
+				<code>@keenmate/web-multiselect</code>: <code>MultiSelectOption.isDisabled</code> →
+				<code>disabled</code>).
+			</p>
+			<CodeBlock
+				codeContent={`// ❌ rc01
+const navTree = [
+  { path: '/labs', title: 'Labs', isHidden: () => !import.meta.env.DEV },
+  { path: '/secret-ops', title: 'Secret', isHidden: true }
+]
+
+// ✅ rc02
+const navTree = [
+  { path: '/labs', title: 'Labs', hidden: () => !import.meta.env.DEV },
+  { path: '/secret-ops', title: 'Secret', hidden: true }
+]`}
+				languageType="javascript"
+				titleText="isHidden → hidden (find-and-replace)"
+			/>
+			<p class="mt-3">
+				The helper predicate <code>isNodeHidden(node)</code> keeps its <code>is*</code> prefix
+				because it's a function, not a field — no rename needed at the import site.
+			</p>
+			<p class="mt-3">
+				<strong>Also new in rc02</strong> (additive, no migration): <code>disabled</code> nodes
+				now render as forbidden in <em>both</em> filter modes — was dropped in hide mode in
+				rc01. The new <code>FilterOptions.disabledClassName</code> lets you style "coming soon"
+				placeholders distinctly from permission-denied items. See the
+				<a href="/whats-new">What's New</a> page for the full rc02 highlights.
+			</p>
+
+			<h3 class="mt-4">v5.3.0-rc01 — no migration needed</h3>
+			<p>
+				No breaking changes. The stacked <code>use:active</code> fix is backward compatible for the
+				overwhelmingly common single-action-per-node case (existing tests pass unchanged). Adopt the
+				new <code>subtree: true</code> option when you want to collapse two stacked
+				<code>use:active</code> calls into one. Adopt <code>helpers/nav-tree</code> when you want a
+				single tree to drive both routes and a permission-filtered sidebar — see the
+				<a href="/whats-new">What's New</a> page for examples.
+			</p>
+
+			<h3 class="mt-4">v5.2.1 — no migration needed</h3>
+			<p>
+				Single-issue release: bare-function routes (<code>{`{ '/': Foo }`}</code>) no longer throw
+				<code>Invalid component object</code> under Svelte 5.5+ / Vite 7 / plugin-svelte 6. If you
+				were on an older toolchain you wouldn't have hit it; if you were on the newer one you were
+				probably workarounded with <code>wrap(&#123; component: Foo &#125;)</code> and can now drop that
+				workaround. Either way: just upgrade.
+			</p>
+
+			<h3 class="mt-4">⚠️ <code>showToast</code> removed from <code>GlobalErrorHandler</code> config (rc02)</h3>
+			<p>
+				The built-in error toast is gone in <strong>rc02</strong>. The render guard was broken under
+				the default <code>navigateSafe</code> strategy (the toast was effectively unobservable), so
+				rather than patch it, the library now expects you to wire your own toast library inside the
+				<code>onError</code> callback. TypeScript will flag the now-unknown property.
+			</p>
+			<CodeBlock
+				codeContent={`// ❌ rc01 and earlier
+configureGlobalErrorHandler({
+  strategy: 'navigateSafe',
+  safeRoute: '/',
+  showToast: true,   // ← removed in rc02
+  toastDuration: 5000
+})
+
+// ✅ rc02 — wire your own toast inside onError
+import { toast } from 'your-toast-lib'
+
+configureGlobalErrorHandler({
+  strategy: 'navigateSafe',
+  safeRoute: '/',
+  onError: (error) => {
+    toast.error(error.message)
+  }
+})`}
+				languageType="javascript"
+				titleText="Toast handling moves to consumer"
+			/>
+
+			<h3 class="mt-4"><code>navigationContext()</code> now returns <code>null</code> when nothing was passed (rc02)</h3>
+			<p>
+				In rc01 and earlier, <code>navigationContext()</code> could return
+				<code>&#123; _routeName: '/some-path' &#125;</code> after any <code>push()</code> — the router's
+				internal <code>_routeName</code> key leaked through the public accessor, so any
+				<code>&#123;#if !navigationContext()&#125;</code> branch was effectively unreachable. In rc02,
+				the public accessor filters internal keys and returns <code>null</code> if no user-visible
+				context exists.
+			</p>
+			<p>
+				<strong>If you were relying on </strong> the truthy-but-empty behavior to detect "navigation
+				happened" (you almost certainly weren't), use <code>location()</code> for that. If you need
+				the raw context including internal keys, import <code>getRawNavigationContext()</code> from
+				<code>/utils</code> — but note that those keys are internal and may change.
+			</p>
+
+			<h3 class="mt-4"><code>routeContext()</code> typo fixed (rc01)</h3>
+			<p>
+				If you were importing <code>routerouteContext()</code> (mangled name from a find-replace
+				accident in rc12) or the README's old <code>routeUserData()</code>, both are gone. The
+				correct, current name is <code>routeContext()</code>.
+			</p>
+			<CodeBlock
+				codeContent={`// ❌ rc12 and earlier
+import { routerouteContext } from '@keenmate/svelte-spa-router/helpers/route-metadata'
+import { routeUserData } from '@keenmate/svelte-spa-router/helpers/route-metadata'
+
+// ✅ rc01+
+import { routeContext } from '@keenmate/svelte-spa-router/helpers/route-metadata'`}
+				languageType="javascript"
+			/>
+
+			<h3 class="mt-4">New features worth adopting</h3>
+			<ul>
+				<li><strong><code>subtree: true</code> on <code>use:active</code></strong> (v5.3.0-rc01) — one action call for "parent stays active on its index AND on every nested URL"; pair with <code>subtreeClassName</code> for distinct styling</li>
+				<li><strong><code>helpers/nav-tree</code></strong> (v5.3.0-rc01) — permission-aware filtering for tree-shaped menus; one tree drives both routes and sidebar</li>
+				<li><strong><code>defineRoutes()</code></strong> (v5.2.0-rc01) — type-safe routes/nav/paths with full IDE autocomplete</li>
+				<li><strong><code>setCurrentUser()</code></strong> (v5.2.0-rc02) — drop your custom <code>getCurrentUser</code> getter and get reactive <code>hasPermission()</code> for free</li>
+				<li><strong><code>revalidateCurrentRoute()</code></strong> (v5.2.0-rc02) — re-check the active route on websocket permission updates without remounting</li>
+				<li><strong><code>relativeLocation</code> on event payloads</strong> (v5.2.0-rc02) — prefix-stripped path for nested routers</li>
+			</ul>
+			<p class="mt-3">
+				See <a href="/whats-new">What's New</a> for full details on each.
+			</p>
+		</section>
+
+		<!-- Original v4 → v5 section -->
+		<section class="mb-5" id="v4-to-v5">
+			<h2 class="mb-4">Upgrading from v4.x to v5.0</h2>
 			<p class="lead">
 				Version 5.0 is a major release built for Svelte 5, featuring a complete rewrite using runes
-				instead of stores. This guide covers all breaking changes and provides step-by-step upgrade instructions.
+				instead of stores. This section covers all breaking changes and provides step-by-step upgrade instructions.
 			</p>
 			<div class="alert alert-warning">
 				<strong>Important:</strong> v5.0 requires Svelte 5.0 or later. If you're still on Svelte 4,

@@ -7,6 +7,15 @@ import { DocLayout, CodeBlock } from '@keenmate/svelte-docs'
 	descriptionText="Flexible filter system for URL-driven UI state">
 
 	<div class="py-1">
+		<div class="alert alert-info mb-4">
+			<strong>Live demo:</strong>
+			<a href="https://history.svelte-spa-router.keenmate.dev/filters-demo" target="_blank">
+				Open <code>/filters-demo</code> →
+			</a>
+			The example app runs filters in <strong>structured (OData-style)</strong> mode — see
+			<code>example/src/main.js</code> for the <code>configureFilters()</code> call.
+		</div>
+
 		<!-- Introduction -->
 		<section class="mb-5">
 			<h2 class="mb-4">URL-Based Filtering</h2>

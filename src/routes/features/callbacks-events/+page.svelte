@@ -6,6 +6,18 @@
 	titleText="Callbacks & Events"
 	descriptionText="Comprehensive guide to all callback functions and events fired by the router">
 	<div class="py-1">
+		<div class="alert alert-info mb-4">
+			<strong>Live demo:</strong>
+			<a href="https://history.svelte-spa-router.keenmate.dev/not-found-demo" target="_blank">
+				Open <code>/not-found-demo</code> →
+			</a>
+			Triggers <code>onNotFound</code> and shows recovery handling. Open the browser console first to
+			see the events fire. For <code>onConditionsFailed</code> behavior, try
+			<a href="https://history.svelte-spa-router.keenmate.dev/admin" target="_blank">
+				<code>/admin</code>
+			</a> as a non-admin (use the example header's <strong>Toggle 👤</strong> button).
+		</div>
+
 		<!-- Introduction -->
 		<section class="mb-5">
 			<p class="lead">
@@ -17,14 +29,21 @@
 				<strong>Callbacks vs Events:</strong>
 				<ul class="mb-0 mt-2">
 					<li>
-						<strong>Events</strong> are fired by the Router component (onrouteLoading,
-						onrouteLoaded, etc.) to notify your app of routing state changes
+						<strong>Events</strong> are fired by the Router component
+						(<code>onRouteLoading</code>, <code>onRouteLoaded</code>, <code>onConditionsFailed</code>,
+						<code>onNotFound</code>) to notify your app of routing state changes
 					</li>
 					<li>
-						<strong>Callbacks</strong> are functions you provide (conditions, authorizationCallback,
-						etc.) that the router calls to make decisions
+						<strong>Callbacks</strong> are functions you provide (<code>conditions</code>,
+						<code>authorizationCallback</code>, etc.) that the router calls to make decisions
 					</li>
 				</ul>
+			</div>
+
+			<div class="alert alert-success">
+				<strong>v5.2.0-rc02:</strong> every event payload now includes a
+				<a href="#relative-location"><code>relativeLocation</code></a> field — the prefix-stripped
+				path for nested routers. For root routers it equals <code>location</code>.
 			</div>
 		</section>
 
@@ -50,10 +69,11 @@
 					<h4 class="h6">Event Detail Structure</h4>
 					<CodeBlock
 						codeContent={`interface RouteLoadingDetail {
-  route: string        // Route pattern (e.g., '/user/:id')
-  location: string     // Actual location (e.g., '/user/123')
-  querystring: string  // Query string (e.g., 'tab=profile')
-  params: object       // Route parameters (e.g., { id: '123' })
+  route: string             // Route pattern (e.g., '/user/:id')
+  location: string          // Full app path (e.g., '/user/123')
+  relativeLocation: string  // Prefix-stripped path (rc02+). Equal to location on root routers.
+  querystring: string       // Query string (e.g., 'tab=profile')
+  params: object            // Route parameters (e.g., { id: '123' })
 }`}
 						languageType="typescript"
 						titleText="Event Detail" />
@@ -102,13 +122,14 @@
 					<h4 class="h6">Event Detail Structure (Single Component)</h4>
 					<CodeBlock
 						codeContent={`interface RouteLoadedDetail {
-  route: string           // Route pattern
-  location: string        // Actual location
-  querystring: string     // Query string
-  params: object         // Route parameters
-  component: function    // Loaded component
-  name: string           // Component name (if available)
-  routeContext: object   // Route context metadata
+  route: string             // Route pattern
+  location: string          // Full app path
+  relativeLocation: string  // Prefix-stripped path (rc02+)
+  querystring: string       // Query string
+  params: object            // Route parameters
+  component: function       // Loaded component
+  name: string              // Component name (if available)
+  routeContext: object      // Route context metadata
 }`}
 						languageType="typescript"
 						titleText="Event Detail" />
@@ -118,6 +139,7 @@
 						codeContent={`interface RouteLoadedDetailZones {
   route: string
   location: string
+  relativeLocation: string
   querystring: string
   params: object
   zones: string[]  // Array of zone names (e.g., ['sidebar', 'main', 'panel'])
@@ -174,10 +196,11 @@
 					<h4 class="h6">Event Detail Structure</h4>
 					<CodeBlock
 						codeContent={`interface ConditionsFailedDetail {
-  route: string        // Route pattern that failed
-  location: string     // Attempted location
-  querystring: string  // Query string
-  params: object       // Route parameters
+  route: string             // Route pattern that failed
+  location: string          // Attempted full path
+  relativeLocation: string  // Prefix-stripped path (rc02+)
+  querystring: string       // Query string
+  params: object            // Route parameters
 }`}
 						languageType="typescript"
 						titleText="Event Detail" />
@@ -218,13 +241,23 @@
 					<h3 class="h5 mb-0">onNotFound</h3>
 				</div>
 				<div class="card-body">
-					<p>Fires when no route matches the current location (404 error).</p>
+					<p>
+						Fires when no route matches the current location (404 error) <strong>or</strong> when
+						a <code>'*'</code> catch-all route matches a URL that no other route claimed.
+					</p>
+					<div class="alert alert-warning">
+						<strong>v5.2.0-rc02 fix:</strong> previously, configuring a <code>'*': NotFound</code>
+						catch-all <em>suppressed</em> this event entirely — apps that wanted to both render
+						a 404 page and log the miss couldn't have both. The event now fires alongside the
+						catch-all render.
+					</div>
 
 					<h4 class="h6">Event Detail Structure</h4>
 					<CodeBlock
 						codeContent={`interface NotFoundDetail {
-  location: string     // Path that was not found
-  querystring: string  // Query string (if any)
+  location: string          // Path that was not found
+  relativeLocation: string  // Prefix-stripped path (rc02+)
+  querystring: string       // Query string (if any)
 }`}
 						languageType="typescript"
 						titleText="Event Detail" />
@@ -265,6 +298,92 @@
 					</div>
 				</div>
 			</div>
+		</section>
+
+		<!-- Relative location for nested routers -->
+		<section class="mb-5" id="relative-location">
+			<h2 class="mb-4">Relative location for nested routers <span class="badge bg-success">rc02</span></h2>
+			<p>
+				Nested <code>&lt;Router&gt;</code> instances configured with a <code>prefix</code> define
+				their routes in <em>prefix-relative</em> terms (e.g. <code>'/known'</code>, not
+				<code>'/foo/bar/known'</code>). Internally the router matches against the prefix-stripped
+				path. Before rc02, every event payload reported the <strong>full app URL</strong> in
+				<code>location</code> — two different notions of "location" depending on whether you looked
+				at route definitions or event payloads. Consumers had to strip the prefix themselves.
+			</p>
+			<p>In rc02, every event payload includes both:</p>
+			<ul>
+				<li>
+					<strong><code>location</code></strong> — full app URL. Use this for logging, analytics,
+					or re-navigating with <code>push()</code> (which always takes app-wide paths).
+				</li>
+				<li>
+					<strong><code>relativeLocation</code></strong> — prefix-stripped path. Use this for
+					reasoning about <em>this</em> router's routing decisions, matching against route
+					patterns, etc.
+				</li>
+			</ul>
+
+			<h4 class="mt-4">Relationship between the two fields</h4>
+			<div class="table-responsive">
+				<table class="table table-bordered">
+					<thead>
+						<tr>
+							<th>Router setup</th>
+							<th>App URL</th>
+							<th><code>location</code></th>
+							<th><code>relativeLocation</code></th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>Root router, no <code>prefix</code></td>
+							<td><code>/users/42</code></td>
+							<td><code>/users/42</code></td>
+							<td><code>/users/42</code> (same)</td>
+						</tr>
+						<tr>
+							<td>Nested router with <code>prefix="/admin"</code></td>
+							<td><code>/admin/users/42</code></td>
+							<td><code>/admin/users/42</code></td>
+							<td><code>/users/42</code></td>
+						</tr>
+						<tr>
+							<td>Nested router with <code>prefix="/admin"</code>, prefix-only URL</td>
+							<td><code>/admin</code></td>
+							<td><code>/admin</code></td>
+							<td><code>/</code> (stripping leaves empty → root)</td>
+						</tr>
+						<tr>
+							<td>Nested router, URL outside its prefix (rare)</td>
+							<td><code>/public</code></td>
+							<td><code>/public</code></td>
+							<td><code>/public</code> (no stripping)</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+
+			<h4 class="mt-4">Practical example</h4>
+			<CodeBlock language="svelte" codeContent={`<!-- App.svelte: root router covers everything -->
+<Router
+  {routes}
+  onRouteLoaded={(e) => {
+    // location === relativeLocation here (no prefix)
+    analytics.pageview(e.detail.location)
+  }}
+/>
+
+<!-- Admin.svelte: nested router under /admin -->
+<Router
+  routes={adminRoutes}
+  prefix="/admin"
+  onRouteLoaded={(e) => {
+    // e.detail.location          === '/admin/users/42'  (for logging)
+    // e.detail.relativeLocation  === '/users/42'        (matches route key)
+    console.log('Admin router landed on', e.detail.relativeLocation)
+  }}
+/>`} />
 		</section>
 
 		<!-- Navigation Guard Callbacks -->

@@ -7,6 +7,15 @@
   descriptionText="Convenient API for creating routes with metadata, loading states, and conditions"
 >
   <div class="py-1">
+    <div class="alert alert-info mb-4">
+      <strong>Live demo:</strong>
+      <a href="https://history.svelte-spa-router.keenmate.dev/loading-demo" target="_blank">
+        Open <code>/loading-demo</code> →
+      </a>
+      Shows the loading patterns described below — <code>shouldDisplayLoadingOnRouteLoad</code>,
+      <code>loadingComponent</code>, and the <code>hideLoading()</code> contract.
+    </div>
+
     <!-- Introduction -->
     <section class="mb-5">
       <h2 class="mb-4">Convenient Route Creation API</h2>
@@ -684,6 +693,23 @@ export const routes = {
         handle loading state. Component just fetches data and calls
         <code>hideLoading()</code>. Perfect for multi-zone layouts.
       </p>
+      <div class="alert alert-danger">
+        <strong>⚠️ Critical contract: you MUST call <code>hideLoading()</code>.</strong>
+        With <code>shouldDisplayLoadingOnRouteLoad: true</code>, the router mounts your
+        component but keeps it hidden under the loading component until <em>you</em> signal
+        readiness. Forgetting to call <code>hideLoading()</code> (or throwing before reaching
+        it) leaves the loading screen up <strong>forever</strong> — no timeout, no recovery short
+        of navigating away.
+        <br><br>
+        <strong>v5.2.0-rc02 safety net:</strong> if <code>hideLoading()</code> hasn't been called
+        within <strong>10 seconds</strong>, the router prints a <code>console.warn</code> naming
+        the route and the missed call. This bypasses the configurable logger (configuration
+        warnings always print). The warning resets and re-fires on subsequent navigations.
+        <br><br>
+        <strong>Best practice:</strong> wrap the data-fetch in <code>try / catch / finally</code> and call
+        <code>hideLoading()</code> in <code>finally</code>. That covers the throw-before-hide case
+        and is the pattern used in the example app's <code>DocumentDetail.svelte</code>.
+      </div>
 
       <CodeBlock
         codeContent={`import { createRoute } from '@keenmate/svelte-spa-router/wrap'
@@ -699,29 +725,34 @@ const routes = {
 }
 
 // In DocumentDetail.svelte
-import { onMount } from 'svelte'
+import { onMount, tick } from 'svelte'
 import { hideLoading, updateRouteMetadata } from '@keenmate/svelte-spa-router/helpers/route-metadata'
 
 let { routeParams } = $props()
 let document = null
+let error = null
 
 onMount(async () => {
-  document = await fetchDocument(routeParams.id)
-
-  // Update with real data
-  updateRouteMetadata({
-    title: document.filename,  // "Invoice template.pdf"
-    breadcrumbs: [
-      { label: 'Home', path: '/' },
-      { label: 'Documents', path: '/documents' },
-      { label: document.filename }
-    ]
-  })
-
-  hideLoading()  // Hide loading, show component
+  try {
+    document = await fetchDocument(routeParams.id)
+    updateRouteMetadata({
+      title: document.filename,
+      breadcrumbs: [
+        { label: 'Home', path: '/' },
+        { label: 'Documents', path: '/documents' },
+        { label: document.filename }
+      ]
+    })
+    await tick()  // ensure DOM updates before unhiding
+  } catch (err) {
+    error = err.message
+    await tick()
+  } finally {
+    hideLoading()  // ← MUST call this. finally{} covers the throw case.
+  }
 })
 
-// No loading UI needed - router handles it!
+// No loading UI needed - router handles it until hideLoading() fires
 <h1>{document?.filename}</h1>
 <p>Size: {document?.size}</p>`}
         languageType="javascript"

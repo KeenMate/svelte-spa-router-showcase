@@ -7,6 +7,14 @@ import { DocLayout, CodeBlock } from '@keenmate/svelte-docs'
 	descriptionText="Category-based debug logging system for troubleshooting routing issues">
 
 	<div class="py-1">
+		<div class="alert alert-info mb-4">
+			<strong>See it live:</strong> the
+			<a href="https://history.svelte-spa-router.keenmate.dev" target="_blank">history-mode example app</a>
+			already calls <code>enableLogging()</code> in dev. Open the browser console while navigating to
+			see color-coded category output. You can also toggle categories at runtime from the console:
+			<code>window.components['svelte-spa-router'].logging.setCategoryLevel('ROUTER:NAVIGATION', 'debug')</code>.
+		</div>
+
 		<!-- Introduction -->
 		<section class="mb-5">
 			<h2 class="mb-4">Overview</h2>

@@ -7,6 +7,17 @@ import { DocLayout, CodeBlock } from '@keenmate/svelte-docs'
 	descriptionText="Dynamic titles, breadcrumbs, and custom metadata for your routes">
 
 	<div class="py-1">
+		<div class="alert alert-info mb-4">
+			<strong>Live demos:</strong>
+			<a href="https://history.svelte-spa-router.keenmate.dev/metadata-demo" target="_blank">
+				Open <code>/metadata-demo</code> →
+			</a>
+			Static route metadata. For dynamic updates after data load (titles, breadcrumbs), try
+			<a href="https://history.svelte-spa-router.keenmate.dev/document/1" target="_blank">
+				<code>/document/1</code>
+			</a> — watch the breadcrumb update from "Loading…" to the document filename.
+		</div>
+
 		<!-- Introduction -->
 		<section class="mb-5">
 			<h2 class="mb-4">Route Metadata System</h2>
@@ -456,7 +467,7 @@ const hasBreadcrumbs = $derived(breadcrumbs.length > 0)
     {#each breadcrumbs as crumb, i}
       <li class:active={i === breadcrumbs.length - 1}>
         {#if crumb.path && i < breadcrumbs.length - 1}
-          <a href={crumb.path} use:link>{crumb.label}</a>
+          <a href={crumb.path}>{crumb.label}</a>
         {:else}
           <span>{crumb.label}</span>
         {/if}

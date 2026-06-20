@@ -7,6 +7,14 @@ import { DocLayout, CodeBlock } from '@keenmate/svelte-docs'
 	descriptionText="Prevent navigation when there's unsaved work or other conditions">
 
 	<div class="py-1">
+		<div class="alert alert-info mb-4">
+			<strong>Live demo:</strong>
+			<a href="https://history.svelte-spa-router.keenmate.dev/navigation-guard-demo" target="_blank">
+				Open <code>/navigation-guard-demo</code> →
+			</a>
+			Compares the three exit-guard modes (wrapper, direct, dirty-check) with an unsaved-changes form.
+		</div>
+
 		<!-- Introduction -->
 		<section class="mb-5">
 			<h2 class="mb-4">What are Navigation Guards?</h2>

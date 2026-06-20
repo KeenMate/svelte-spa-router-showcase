@@ -7,6 +7,19 @@ import { DocLayout, CodeBlock } from '@keenmate/svelte-docs'
 	descriptionText="Type-safe navigation with named routes and parameter substitution">
 
 	<div class="py-1">
+		<div class="alert alert-info mb-4">
+			<strong>Live demo:</strong>
+			<a href="https://history.svelte-spa-router.keenmate.dev/links-demo" target="_blank">
+				Open <code>/links-demo</code> →
+			</a>
+			Walks through all <code>use:link</code> formats — old-style, object, named-route, array shorthand, and 4-element array with navigation context.
+		</div>
+		<div class="alert alert-success mb-4">
+			<strong>v5.2+:</strong> for type-safe routes with autocomplete and compile-time param checking,
+			see <a href="/features/define-routes"><code>defineRoutes()</code></a> — it auto-registers and gives you
+			generated <code>nav.X.push()</code> and <code>paths.X(params)</code> helpers.
+		</div>
+
 		<!-- Introduction -->
 		<section class="mb-5">
 			<h2 class="mb-4">What are Named Routes?</h2>

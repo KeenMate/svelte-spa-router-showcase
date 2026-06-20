@@ -4,20 +4,29 @@ import { DocLayout, CodeBlock } from '@keenmate/svelte-docs'
 
 <DocLayout
 	titleText="Global Error Handling"
-	descriptionText="Comprehensive error handling system with automatic recovery strategies">
+	descriptionText="Catch unhandled errors with configurable recovery strategies, restart-loop prevention, and an optional full-page error UI">
 
 	<div class="py-1">
-		<!-- Introduction -->
+		<!-- Intro -->
 		<section class="mb-5">
 			<h2 class="mb-4">Overview</h2>
 			<p class="lead">
-				The router provides a global error handling system that catches unhandled errors throughout
-				your application and executes configured recovery strategies. It includes restart loop prevention,
-				error filtering, and customizable error UI.
+				<code>GlobalErrorHandler</code> wraps your app and catches all unhandled errors
+				(<code>window.error</code> and <code>unhandledrejection</code>). On catch it runs your
+				chosen recovery strategy and optionally renders a full-page error UI. SessionStorage-based
+				loop prevention stops the strategy from running away.
 			</p>
-			<div class="alert alert-info">
-				The error handler uses sessionStorage to track restart attempts and prevent infinite loops.
-				It automatically resets after successful navigation.
+			<div class="alert alert-warning">
+				<strong>⚠️ Breaking change in v5.2.0-rc02:</strong> the built-in error toast was removed
+				entirely. The <code>showToast</code> config field is gone. Notification UI is now your
+				responsibility — wire your favorite toast library inside the <code>onError</code> callback.
+				See <a href="#toast-removed">below</a> for the migration recipe.
+			</div>
+			<div class="alert alert-info mt-3">
+				<strong>Live demo:</strong>
+				<a href="https://history.svelte-spa-router.keenmate.dev/error-handling-demo" target="_blank">
+					Open <code>/error-handling-demo</code> →
+				</a>
 			</div>
 		</section>
 
@@ -25,503 +34,461 @@ import { DocLayout, CodeBlock } from '@keenmate/svelte-docs'
 		<section class="mb-5">
 			<h2 class="mb-4">Quick Start</h2>
 
-			<h4>1. Configure Error Handler</h4>
+			<h4>1. Configure in <code>main.js</code></h4>
 			<CodeBlock
-				codeContent={`// main.js
-import { configureGlobalErrorHandler } from '@keenmate/svelte-spa-router/helpers/error-handler'
+				codeContent={`import { configureGlobalErrorHandler } from '@keenmate/svelte-spa-router/helpers/error-handler'
 
 configureGlobalErrorHandler({
-  maxRestarts: 3,
   strategy: 'navigateSafe',
   safeRoute: '/',
-  showToast: true
+  maxRestarts: 3,
+  restartWindow: 60000,
+  // Wire your own toast / monitoring inside onError
+  onError: (error, errorInfo, context) => {
+    console.error('Caught error:', error)
+    // Sentry.captureException(error)
+    // toast.error(error.message)
+  },
+  ignoreErrors: [/ResizeObserver loop/i]
 })`}
 				languageType="javascript"
 				titleText="Configure in main.js"
 			/>
 
-			<h4 class="mt-4">2. Add GlobalErrorHandler Component</h4>
+			<h4 class="mt-4">2. Wrap your app with <code>GlobalErrorHandler</code></h4>
+			<p>
+				<code>GlobalErrorHandler</code> is a <strong>wrapper</strong> — pass your app content as
+				children, not as a sibling.
+			</p>
 			<CodeBlock
 				codeContent={`<!-- App.svelte -->
 <script>
 import Router from '@keenmate/svelte-spa-router'
-import { GlobalErrorHandler } from '@keenmate/svelte-spa-router/helpers/GlobalErrorHandler'
+import GlobalErrorHandler from '@keenmate/svelte-spa-router/helpers/GlobalErrorHandler'
 import { routes } from './routes'
-<\/script>
+</script>
 
-<GlobalErrorHandler />
-<Router {routes} />
-
-<style>
-/* Your styles */
-<\/style>`}
+<GlobalErrorHandler>
+  <Router {routes} />
+</GlobalErrorHandler>`}
 				languageType="svelte"
-				titleText="Add to App.svelte"
+				titleText="App.svelte"
 			/>
-
-			<p class="mt-3">
-				The <code>GlobalErrorHandler</code> component listens for all unhandled errors and executes
-				the configured recovery strategy.
-			</p>
 		</section>
 
 		<!-- Recovery Strategies -->
 		<section class="mb-5">
-			<h2 class="mb-4">Recovery Strategies</h2>
+			<h2 class="mb-4">Recovery strategies</h2>
 
-			<h4>navigateSafe - Navigate to Safe Route (Default)</h4>
-			<p>Attempts to navigate to a known-good route when an error occurs:</p>
+			<h4><code>navigateSafe</code> — navigate to a known-good route (default)</h4>
+			<p>Pushes <code>safeRoute</code> when an error fires. Best for most apps with a reliable landing page.</p>
 			<CodeBlock
 				codeContent={`configureGlobalErrorHandler({
   strategy: 'navigateSafe',
-  safeRoute: '/',  // Navigate to home page
-  maxRestarts: 3,
-  showToast: true  // Show error toast notification
+  safeRoute: '/',
+  maxRestarts: 3
 })`}
 				languageType="javascript"
-				titleText="Navigate to safe route"
 			/>
-			<div class="alert alert-secondary mt-2">
-				<strong>Use when:</strong> You have a reliable landing page that always works
-			</div>
 
-			<h4 class="mt-4">restart - Full Application Restart</h4>
-			<p>Reloads the entire application (hard refresh):</p>
+			<h4 class="mt-4"><code>restart</code> — full app reload</h4>
+			<p>
+				Hard-refreshes the page. Useful when errors are likely due to corrupted in-memory state.
+				The <code>autoRestart</code> + <code>restartDelay</code> options control whether the reload
+				is automatic or user-triggered.
+			</p>
 			<CodeBlock
 				codeContent={`configureGlobalErrorHandler({
   strategy: 'restart',
-  maxRestarts: 2,  // Prevent infinite restart loops
-  showToast: true
+  autoRestart: true,
+  restartDelay: 5000,   // 5s before reload
+  maxRestarts: 2,
+  restartWindow: 60000
 })`}
 				languageType="javascript"
-				titleText="Restart application"
 			/>
-			<div class="alert alert-secondary mt-2">
-				<strong>Use when:</strong> Errors are likely due to stale state that a refresh would fix
-			</div>
 
-			<h4 class="mt-4">showError - Display Error UI</h4>
-			<p>Shows a full-page error display with recovery options:</p>
+			<h4 class="mt-4"><code>showError</code> — full-page error UI</h4>
+			<p>
+				Renders the error component (built-in <code>ErrorDisplay</code> by default, or your own via
+				the <code>errorComponent</code> snippet prop on <code>GlobalErrorHandler</code>). The user
+				picks their own recovery path.
+			</p>
 			<CodeBlock
 				codeContent={`configureGlobalErrorHandler({
   strategy: 'showError',
-  maxRestarts: 3,
-  ErrorComponent: CustomErrorDisplay  // Optional custom error component
+  showErrorComponent: true
 })`}
 				languageType="javascript"
-				titleText="Show error UI"
 			/>
-			<div class="alert alert-secondary mt-2">
-				<strong>Use when:</strong> You want users to see the error and choose their own recovery action
-			</div>
 
-			<h4 class="mt-4">custom - Custom Error Handler</h4>
-			<p>Implement your own error handling logic:</p>
+			<h4 class="mt-4"><code>custom</code> — run your own recovery</h4>
+			<p>
+				The router catches the error, then hands it to your <code>onRecover</code> callback with
+				helpers for restart / navigate / show-error so you can decide what to do.
+			</p>
 			<CodeBlock
 				codeContent={`configureGlobalErrorHandler({
   strategy: 'custom',
-  customHandler: (error, errorInfo) => {
-    // Log to error tracking service
-    console.error('Application error:', error, errorInfo)
-
-    // Send to analytics
-    analytics.track('error', {
-      message: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack
-    })
-
-    // Navigate to error page
-    push('/error', {}, { error: error.message })
+  onRecover: (error, errorInfo, context, helpers) => {
+    if (error.name === 'NetworkError') {
+      helpers.navigate('/offline')
+    } else if (context.sessionErrors.length >= 3) {
+      helpers.restart()
+    } else {
+      helpers.showError()
+    }
   }
 })`}
 				languageType="javascript"
-				titleText="Custom error handler"
 			/>
+		</section>
+
+		<!-- Toast removed (rc02) -->
+		<section class="mb-5" id="toast-removed">
+			<h2 class="mb-4">⚠️ <code>showToast</code> removed in v5.2.0-rc02</h2>
+			<p>
+				Previously the library rendered a built-in <code>&lt;div class="error-toast"&gt;</code> on
+				caught errors, gated by <code>showToast</code> (default <code>true</code>). The render
+				guard was broken under the default <code>navigateSafe</code> strategy: it called
+				<code>clearError()</code> synchronously after <code>push()</code> in the same handler tick,
+				so by the time Svelte's reactive system flushed <code>toastVisible = true</code>, the
+				error state was already gone and the toast never rendered.
+			</p>
+			<p>
+				Rather than patch the broken interaction, the toast was removed. Every app already has a
+				preferred toast/snackbar library — the router's job is to surface the event, not paint pixels.
+			</p>
+			<CodeBlock
+				codeContent={`// ❌ rc01 and earlier
+configureGlobalErrorHandler({
+  strategy: 'navigateSafe',
+  safeRoute: '/',
+  showToast: true,        // ← removed
+  toastDuration: 5000     // ← removed
+})
+
+// ✅ rc02 — toast lives in onError
+import { toast } from 'your-toast-lib'
+
+configureGlobalErrorHandler({
+  strategy: 'navigateSafe',
+  safeRoute: '/',
+  onError: (error, errorInfo, context) => {
+    toast.error(error.message)
+  }
+})`}
+				languageType="javascript"
+				titleText="Migration from showToast"
+			/>
+			<p>
+				<strong>TypeScript will flag the now-unknown property</strong>, so a typecheck after upgrade
+				is the easiest way to find every call site that needs updating.
+			</p>
 		</section>
 
 		<!-- Configuration Options -->
 		<section class="mb-5">
-			<h2 class="mb-4">Configuration Options</h2>
-
-			<table class="table table-bordered">
-				<thead>
-					<tr>
-						<th>Option</th>
-						<th>Type</th>
-						<th>Default</th>
-						<th>Description</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr>
-						<td><code>strategy</code></td>
-						<td>string</td>
-						<td>'navigateSafe'</td>
-						<td>Recovery strategy: 'navigateSafe', 'restart', 'showError', or 'custom'</td>
-					</tr>
-					<tr>
-						<td><code>maxRestarts</code></td>
-						<td>number</td>
-						<td>3</td>
-						<td>Maximum restart attempts before showing error UI</td>
-					</tr>
-					<tr>
-						<td><code>safeRoute</code></td>
-						<td>string</td>
-						<td>'/'</td>
-						<td>Route to navigate to when using 'navigateSafe' strategy</td>
-					</tr>
-					<tr>
-						<td><code>showToast</code></td>
-						<td>boolean</td>
-						<td>true</td>
-						<td>Show toast notification when error occurs</td>
-					</tr>
-					<tr>
-						<td><code>ErrorComponent</code></td>
-						<td>Component</td>
-						<td>ErrorDisplay</td>
-						<td>Custom error display component</td>
-					</tr>
-					<tr>
-						<td><code>customHandler</code></td>
-						<td>Function</td>
-						<td>undefined</td>
-						<td>Custom error handler function (required for 'custom' strategy)</td>
-					</tr>
-					<tr>
-						<td><code>errorFilter</code></td>
-						<td>RegExp | string</td>
-						<td>undefined</td>
-						<td>Only handle errors matching this pattern</td>
-					</tr>
-				</tbody>
-			</table>
+			<h2 class="mb-4">Configuration options</h2>
+			<div class="table-responsive">
+				<table class="table table-bordered">
+					<thead>
+						<tr>
+							<th>Option</th>
+							<th>Type</th>
+							<th>Default</th>
+							<th>Description</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td><code>strategy</code></td>
+							<td><code>'navigateSafe' | 'restart' | 'showError' | 'custom'</code></td>
+							<td><code>'navigateSafe'</code></td>
+							<td>Recovery behavior on caught error</td>
+						</tr>
+						<tr>
+							<td><code>safeRoute</code></td>
+							<td><code>string</code></td>
+							<td><code>'/'</code></td>
+							<td>Used by <code>navigateSafe</code> strategy</td>
+						</tr>
+						<tr>
+							<td><code>maxRestarts</code></td>
+							<td><code>number</code></td>
+							<td><code>3</code></td>
+							<td>Max restarts allowed within <code>restartWindow</code></td>
+						</tr>
+						<tr>
+							<td><code>restartWindow</code></td>
+							<td><code>number</code> (ms)</td>
+							<td><code>60000</code></td>
+							<td>Sliding window for counting restarts</td>
+						</tr>
+						<tr>
+							<td><code>autoRestart</code></td>
+							<td><code>boolean</code></td>
+							<td><code>false</code></td>
+							<td>When <code>strategy: 'restart'</code>, restart automatically vs wait for user</td>
+						</tr>
+						<tr>
+							<td><code>restartDelay</code></td>
+							<td><code>number</code> (ms)</td>
+							<td><code>5000</code></td>
+							<td>Delay before auto-restart fires</td>
+						</tr>
+						<tr>
+							<td><code>showErrorComponent</code></td>
+							<td><code>boolean</code></td>
+							<td><code>false</code></td>
+							<td>Render the full-page error UI when an error is active</td>
+						</tr>
+						<tr>
+							<td><code>onError</code></td>
+							<td><code>(error, errorInfo, context) =&gt; void</code></td>
+							<td>—</td>
+							<td>Logging / monitoring hook. Fires on every catch, independent of strategy. <strong>This is where your toast library goes.</strong></td>
+						</tr>
+						<tr>
+							<td><code>onRecover</code></td>
+							<td><code>(error, errorInfo, context, helpers) =&gt; void</code></td>
+							<td>—</td>
+							<td>Recovery callback. Only fires when <code>strategy: 'custom'</code>.</td>
+						</tr>
+						<tr>
+							<td><code>ignoreErrors</code></td>
+							<td><code>(RegExp | string)[]</code></td>
+							<td><code>[]</code></td>
+							<td>Errors matching any pattern are silently dropped (no <code>onError</code>, no recovery)</td>
+						</tr>
+						<tr>
+							<td><code>isDevelopment</code></td>
+							<td><code>boolean</code></td>
+							<td><code>false</code></td>
+							<td>Default <code>ErrorDisplay</code> shows stack traces only when <code>true</code></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
 		</section>
 
-		<!-- Error Filtering -->
+		<!-- Filtering -->
 		<section class="mb-5">
-			<h2 class="mb-4">Error Filtering</h2>
-			<p>Filter which errors trigger the error handler:</p>
-
-			<h4>Filter by Error Message</h4>
+			<h2 class="mb-4">Filtering noisy errors with <code>ignoreErrors</code></h2>
+			<p>
+				Pass an array of patterns. Matching errors never reach <code>onError</code> or the
+				recovery strategy — they're treated as if they hadn't been thrown.
+			</p>
 			<CodeBlock
-				codeContent={`// Only handle network errors
-configureGlobalErrorHandler({
+				codeContent={`configureGlobalErrorHandler({
   strategy: 'navigateSafe',
-  safeRoute: '/offline',
-  errorFilter: /network|fetch|connection/i
+  ignoreErrors: [
+    /ResizeObserver loop/i,           // browser quirk
+    /NetworkError when attempting/,   // user offline
+    'AbortError',                     // cancelled fetches
+    /ChunkLoadError/                  // stale chunk, user will reload anyway
+  ]
 })`}
 				languageType="javascript"
-			/>
-
-			<h4 class="mt-4">Filter by String Match</h4>
-			<CodeBlock
-				codeContent={`// Only handle specific error type
-configureGlobalErrorHandler({
-  strategy: 'showError',
-  errorFilter: 'TypeError'
-})`}
-				languageType="javascript"
-			/>
-
-			<h4 class="mt-4">Ignore Specific Errors</h4>
-			<CodeBlock
-				codeContent={`// Handle all errors except ResizeObserver
-configureGlobalErrorHandler({
-  strategy: 'restart',
-  errorFilter: (error) => {
-    // Return false to ignore this error
-    if (error.message.includes('ResizeObserver')) {
-      return false
-    }
-    return true
-  }
-})`}
-				languageType="javascript"
+				titleText="Common ignore patterns"
 			/>
 		</section>
 
 		<!-- Restart Loop Prevention -->
 		<section class="mb-5">
-			<h2 class="mb-4">Restart Loop Prevention</h2>
+			<h2 class="mb-4">Restart loop prevention</h2>
 			<p>
-				The error handler uses sessionStorage to track restart attempts and prevent infinite loops:
+				When an error keeps firing during recovery (e.g. a broken initialization that breaks
+				<code>safeRoute</code> too), the restart counter prevents infinite loops. Counts live
+				in <code>sessionStorage</code> under <code>__svelte_spa_router_restart_count</code> and
+				expire after <code>restartWindow</code>.
 			</p>
-
 			<CodeBlock
-				codeContent={`// When restart limit is reached, strategy switches to 'showError'
-configureGlobalErrorHandler({
+				codeContent={`configureGlobalErrorHandler({
   strategy: 'restart',
-  maxRestarts: 2  // After 2 restarts, show error UI instead
-})`}
+  autoRestart: true,
+  maxRestarts: 2,
+  restartWindow: 60000
+})
+
+// After 2 restarts in 60s, restart() returns false and the next
+// recovery falls through to showing the error component.`}
 				languageType="javascript"
 			/>
-
-			<div class="alert alert-warning mt-3">
-				<strong>Important:</strong> The restart counter is stored in sessionStorage under the key
-				<code>__svelte_spa_router_restart_count</code>. It resets when:
-				<ul class="mb-0">
-					<li>User successfully navigates without errors</li>
-					<li>User closes the browser tab</li>
-					<li>User manually calls <code>canRestart()</code> and gets true</li>
-				</ul>
-			</div>
+			<p class="mt-3">The counter resets when:</p>
+			<ul>
+				<li>The user navigates without an error</li>
+				<li>The browser tab is closed (sessionStorage scope)</li>
+				<li>The window passes without new restarts</li>
+			</ul>
 		</section>
 
 		<!-- Helper Functions -->
 		<section class="mb-5">
-			<h2 class="mb-4">Helper Functions</h2>
+			<h2 class="mb-4">Helper functions</h2>
+			<p>
+				All exported from <code>@keenmate/svelte-spa-router/helpers/error-handler</code>. Inside
+				<code>onRecover</code>, the same helpers are passed as the <code>helpers</code> argument.
+			</p>
 
-			<h4>restart()</h4>
-			<p>Manually trigger an application restart (respects maxRestarts limit):</p>
+			<h4><code>restart()</code></h4>
+			<p>Trigger a restart, respecting <code>maxRestarts</code>. Returns <code>true</code> if it actually restarted, <code>false</code> if rate-limited.</p>
 			<CodeBlock
 				codeContent={`import { restart } from '@keenmate/svelte-spa-router/helpers/error-handler'
 
-function handleCriticalError() {
-  // Try to restart app
-  if (restart()) {
-    // Restart initiated
-  } else {
-    // Restart limit reached
-    console.error('Cannot restart - limit reached')
-  }
+if (!restart()) {
+  console.warn('Restart limit reached — falling back to error UI')
 }`}
 				languageType="javascript"
 			/>
 
-			<h4 class="mt-4">navigate()</h4>
-			<p>Navigate to safe route (uses configured safeRoute):</p>
+			<h4 class="mt-4"><code>navigate(route)</code></h4>
+			<p>Navigate to any route. Takes a path string argument (unlike <code>safeRoute</code>, which is configured once).</p>
 			<CodeBlock
 				codeContent={`import { navigate } from '@keenmate/svelte-spa-router/helpers/error-handler'
 
-function handleRecoverableError() {
-  navigate()  // Go to safe route
-}`}
+navigate('/offline')`}
 				languageType="javascript"
 			/>
 
-			<h4 class="mt-4">showError()</h4>
-			<p>Display the error UI component:</p>
+			<h4 class="mt-4"><code>showError()</code></h4>
+			<p>Force the full-page error UI to render (assumes <code>showErrorComponent: true</code> is configured).</p>
+
+			<h4 class="mt-4"><code>canRestart()</code> / <code>getRestartCount()</code></h4>
+			<p>Inspect the restart state — useful for gating a "Try again" button in your custom error component.</p>
 			<CodeBlock
-				codeContent={`import { showError } from '@keenmate/svelte-spa-router/helpers/error-handler'
+				codeContent={`import { canRestart, getRestartCount } from '@keenmate/svelte-spa-router/helpers/error-handler'
 
-function handleError(error) {
-  showError(error, { componentStack: '...' })
-}`}
-				languageType="javascript"
-			/>
-
-			<h4 class="mt-4">canRestart()</h4>
-			<p>Check if restart is still allowed:</p>
-			<CodeBlock
-				codeContent={`import { canRestart } from '@keenmate/svelte-spa-router/helpers/error-handler'
-
-if (canRestart()) {
-  // Show "Restart App" button
-} else {
-  // Hide restart option
-}`}
-				languageType="javascript"
-			/>
-
-			<h4 class="mt-4">getRestartCount()</h4>
-			<p>Get current restart attempt count:</p>
-			<CodeBlock
-				codeContent={`import { getRestartCount } from '@keenmate/svelte-spa-router/helpers/error-handler'
-
-const count = getRestartCount()
-console.log(\`Restart attempts: \${count}\`)`}
-				languageType="javascript"
+{#if canRestart()}
+  <button onclick={() => restart()}>Restart ({getRestartCount()} / 3)</button>
+{/if}`}
+				languageType="svelte"
 			/>
 		</section>
 
 		<!-- Custom Error Component -->
 		<section class="mb-5">
-			<h2 class="mb-4">Custom Error Component</h2>
-			<p>Create a custom error display component:</p>
-
+			<h2 class="mb-4">Custom error UI via <code>errorComponent</code> snippet</h2>
+			<p>
+				Pass an <code>errorComponent</code> snippet to <code>GlobalErrorHandler</code>. The snippet
+				receives an <code>ErrorComponentProps</code> argument with the error, the error info, and
+				recovery callbacks bound to the configured strategy.
+			</p>
 			<CodeBlock
-				codeContent={`<!-- CustomErrorDisplay.svelte -->
-<script>
-import { restart, navigate, canRestart } from '@keenmate/svelte-spa-router/helpers/error-handler'
+				codeContent={`<script>
+import GlobalErrorHandler from '@keenmate/svelte-spa-router/helpers/GlobalErrorHandler'
+import Router from '@keenmate/svelte-spa-router'
+import { routes } from './routes'
+</script>
 
-let { error, errorInfo } = $props()
-<\/script>
+<GlobalErrorHandler>
+  {#snippet errorComponent({ error, errorInfo, onRestart, onNavigateSafe, onContinue, canRestart })}
+    <div class="error-screen">
+      <h1>⚠️ Something went wrong</h1>
+      <p>{error.message}</p>
 
-<div class="error-container">
-  <h1>⚠️ Something Went Wrong</h1>
-  <p>{error.message}</p>
+      {#if import.meta.env.DEV && errorInfo?.stack}
+        <details>
+          <summary>Stack trace</summary>
+          <pre>{errorInfo.stack}</pre>
+        </details>
+      {/if}
 
-  {#if import.meta.env.DEV}
-    <details>
-      <summary>Error Details</summary>
-      <pre>{error.stack}</pre>
-      <pre>{errorInfo.componentStack}</pre>
-    </details>
-  {/if}
+      <div class="actions">
+        <button onclick={onNavigateSafe}>Go home</button>
+        {#if canRestart}
+          <button onclick={onRestart}>Reload app</button>
+        {/if}
+        <button onclick={onContinue}>Continue anyway</button>
+      </div>
+    </div>
+  {/snippet}
 
-  <div class="actions">
-    <button onclick={() => navigate()}>Go Home</button>
-
-    {#if canRestart()}
-      <button onclick={() => restart()}>Restart App</button>
-    {/if}
-  </div>
-</div>
-
-<style>
-.error-container {
-  padding: 2rem;
-  text-align: center;
-  max-width: 600px;
-  margin: 4rem auto;
-}
-.actions {
-  margin-top: 2rem;
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-}
-</style>`}
+  <Router {routes} />
+</GlobalErrorHandler>`}
 				languageType="svelte"
-				titleText="Custom error display component"
+				titleText="Custom error UI"
 			/>
-
-			<p class="mt-3">Use it in configuration:</p>
-			<CodeBlock
-				codeContent={`import { configureGlobalErrorHandler } from '@keenmate/svelte-spa-router/helpers/error-handler'
-import CustomErrorDisplay from './CustomErrorDisplay.svelte'
-
-configureGlobalErrorHandler({
-  strategy: 'showError',
-  ErrorComponent: CustomErrorDisplay
-})`}
-				languageType="javascript"
-			/>
+			<p>
+				<strong>Snippet props</strong> (<code>ErrorComponentProps</code>):
+				<code>error</code>, <code>errorInfo</code>, <code>onRestart</code>,
+				<code>onNavigateSafe</code>, <code>onContinue</code>, <code>canRestart</code>.
+			</p>
 		</section>
 
-		<!-- Integration with Error Tracking -->
+		<!-- Integration -->
 		<section class="mb-5">
-			<h2 class="mb-4">Integration with Error Tracking Services</h2>
+			<h2 class="mb-4">Integration with error tracking</h2>
 
-			<h4>Sentry Integration</h4>
+			<h4>Sentry</h4>
 			<CodeBlock
 				codeContent={`import * as Sentry from '@sentry/svelte'
 import { configureGlobalErrorHandler } from '@keenmate/svelte-spa-router/helpers/error-handler'
 
 configureGlobalErrorHandler({
-  strategy: 'custom',
-  customHandler: (error, errorInfo) => {
-    // Send to Sentry
-    Sentry.captureException(error, {
-      contexts: {
-        svelte: {
-          componentStack: errorInfo.componentStack
-        }
-      }
-    })
-
-    // Then show error UI
-    import { showError } from '@keenmate/svelte-spa-router/helpers/error-handler'
-    showError(error, errorInfo)
-  }
-})`}
-				languageType="javascript"
-			/>
-
-			<h4 class="mt-4">Custom Analytics</h4>
-			<CodeBlock
-				codeContent={`configureGlobalErrorHandler({
   strategy: 'navigateSafe',
   safeRoute: '/',
-  customHandler: (error) => {
-    // Log to analytics before recovery
-    analytics.track('error_occurred', {
-      error_message: error.message,
-      error_type: error.name,
-      stack_trace: error.stack,
-      user_agent: navigator.userAgent,
-      timestamp: new Date().toISOString()
+  onError: (error, errorInfo, context) => {
+    Sentry.captureException(error, {
+      extra: {
+        ...errorInfo,
+        sessionErrorCount: context.sessionErrors.length
+      }
     })
   }
 })`}
 				languageType="javascript"
 			/>
-		</section>
 
-		<!-- Default Error Display -->
-		<section class="mb-5">
-			<h2 class="mb-4">Default Error Display</h2>
-			<p>
-				The router includes a default <code>ErrorDisplay.svelte</code> component with:
-			</p>
-			<ul>
-				<li>Beautiful full-page error UI</li>
-				<li>Error message and stack trace (dev mode only)</li>
-				<li>Recovery action buttons (Go Home, Reload, Continue)</li>
-				<li>Warning when multiple errors detected</li>
-				<li>Responsive design</li>
-			</ul>
+			<h4 class="mt-4">Analytics + toast</h4>
+			<CodeBlock
+				codeContent={`import { toast } from 'svelte-french-toast'
 
-			<div class="alert alert-info">
-				The default error display automatically hides technical details (stack traces, component stack)
-				in production mode to avoid leaking implementation details.
-			</div>
+configureGlobalErrorHandler({
+  strategy: 'navigateSafe',
+  safeRoute: '/',
+  onError: (error, errorInfo) => {
+    analytics.track('error_occurred', {
+      message: error.message,
+      type: error.name,
+      route: errorInfo.route
+    })
+    toast.error(\`Oops: \${error.message}\`)
+  }
+})`}
+				languageType="javascript"
+			/>
 		</section>
 
 		<!-- Best Practices -->
 		<section class="mb-5">
-			<h2 class="mb-4">Best Practices</h2>
+			<h2 class="mb-4">Best practices</h2>
 
-			<h4>1. Choose the Right Strategy</h4>
+			<h4>Pick the right strategy</h4>
 			<ul>
-				<li><strong>navigateSafe</strong>: Best for most applications with a reliable home page</li>
-				<li><strong>restart</strong>: Good for state corruption issues</li>
-				<li><strong>showError</strong>: Best for development or when users need to report errors</li>
-				<li><strong>custom</strong>: When you need full control (e.g., error tracking integration)</li>
+				<li><strong><code>navigateSafe</code></strong> — most apps with a reliable home page</li>
+				<li><strong><code>restart</code></strong> — stale-state issues that a reload would fix</li>
+				<li><strong><code>showError</code></strong> — dev mode, or when you want users to choose recovery</li>
+				<li><strong><code>custom</code></strong> — branching recovery logic (e.g. different routes per error type)</li>
 			</ul>
 
-			<h4 class="mt-4">2. Set Appropriate Restart Limits</h4>
-			<CodeBlock
-				codeContent={`// Too low - users might see error UI too quickly
-maxRestarts: 1
-
-// Good balance - allows retry but prevents loops
-maxRestarts: 3
-
-// Too high - might create frustrating restart loops
-maxRestarts: 10`}
-				languageType="javascript"
-			/>
-
-			<h4 class="mt-4">3. Filter Noise</h4>
-			<p>Some errors are expected and shouldn't trigger recovery:</p>
-			<CodeBlock
-				codeContent={`configureGlobalErrorHandler({
-  strategy: 'navigateSafe',
-  errorFilter: (error) => {
-    // Ignore ResizeObserver loop errors (browser quirk)
-    if (error.message.includes('ResizeObserver loop')) {
-      return false
-    }
-
-    // Ignore cancelled fetch requests
-    if (error.name === 'AbortError') {
-      return false
-    }
-
-    return true  // Handle all other errors
-  }
-})`}
-				languageType="javascript"
-			/>
-
-			<h4 class="mt-4">4. Always Use GlobalErrorHandler Component</h4>
+			<h4 class="mt-4">Don't conflate logging and recovery</h4>
 			<p>
-				Don't forget to add <code>&lt;GlobalErrorHandler /&gt;</code> to your app root,
-				otherwise errors won't be caught!
+				<code>onError</code> is for monitoring / toasts / analytics — fires on every catch
+				regardless of strategy. <code>onRecover</code> is only for the <code>custom</code> strategy
+				and decides what happens. Keep them separate.
+			</p>
+
+			<h4 class="mt-4">Always wrap with <code>GlobalErrorHandler</code></h4>
+			<p>
+				If your app content isn't inside <code>&lt;GlobalErrorHandler&gt;</code>, errors won't be
+				caught. Wrapping at the root means it covers every route.
+			</p>
+
+			<h4 class="mt-4">Filter known-noisy errors</h4>
+			<p>
+				<code>ResizeObserver loop</code> and <code>AbortError</code> are textbook examples — neither
+				is a real bug, both will trigger recovery if you don't ignore them.
 			</p>
 		</section>
 
@@ -529,36 +496,35 @@ maxRestarts: 10`}
 		<section class="mb-5">
 			<h2 class="mb-4">Troubleshooting</h2>
 
-			<h4>Errors Not Being Caught</h4>
+			<h4>Errors aren't being caught</h4>
 			<ul>
-				<li>Verify <code>&lt;GlobalErrorHandler /&gt;</code> is in your App.svelte</li>
-				<li>Check if errorFilter is blocking the error</li>
-				<li>Ensure error handler is configured before app mount</li>
+				<li>Verify your app content is <strong>inside</strong> <code>&lt;GlobalErrorHandler&gt;</code> (not a sibling)</li>
+				<li>Check <code>ignoreErrors</code> — is the pattern accidentally matching the error you care about?</li>
+				<li>Confirm <code>configureGlobalErrorHandler</code> ran before <code>mount(App, …)</code></li>
 			</ul>
 
-			<h4>Restart Loop</h4>
-			<ul>
-				<li>Lower maxRestarts value</li>
-				<li>Check sessionStorage for <code>__svelte_spa_router_restart_count</code></li>
-				<li>Verify the error isn't occurring on every route</li>
-				<li>Consider using 'navigateSafe' instead of 'restart'</li>
-			</ul>
-
-			<h4>Custom Handler Not Called</h4>
+			<h4 class="mt-4"><code>onRecover</code> never fires</h4>
 			<CodeBlock
-				codeContent={`// ❌ Wrong - strategy doesn't match
+				codeContent={`// ❌ Wrong — strategy isn't 'custom', so onRecover is ignored
 configureGlobalErrorHandler({
-  strategy: 'restart',  // Won't call customHandler!
-  customHandler: (error) => { ... }
+  strategy: 'restart',
+  onRecover: (error) => { /* never called */ }
 })
 
 // ✅ Correct
 configureGlobalErrorHandler({
   strategy: 'custom',
-  customHandler: (error) => { ... }
+  onRecover: (error, errorInfo, context, helpers) => { /* … */ }
 })`}
 				languageType="javascript"
 			/>
+
+			<h4 class="mt-4">Restart loop never stops</h4>
+			<ul>
+				<li>Lower <code>maxRestarts</code> (e.g. <code>2</code>)</li>
+				<li>Clear sessionStorage manually during debugging: <code>delete sessionStorage.__svelte_spa_router_restart_count</code></li>
+				<li>If the error fires on every route (including <code>safeRoute</code>), <code>navigateSafe</code> can't recover — switch to <code>showError</code> so the user can act</li>
+			</ul>
 		</section>
 	</div>
 </DocLayout>

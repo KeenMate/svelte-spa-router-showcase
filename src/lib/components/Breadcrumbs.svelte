@@ -3,7 +3,6 @@
  * Breadcrumbs component - Displays navigation breadcrumbs
  * Updates automatically when route changes
  */
-import { link } from '@keenmate/svelte-spa-router'
 import { routeBreadcrumbs } from '@keenmate/svelte-spa-router/helpers/route-metadata'
 
 const breadcrumbs = $derived(routeBreadcrumbs())
@@ -16,7 +15,7 @@ const hasBreadcrumbs = $derived(breadcrumbs.length > 0)
 		{#each breadcrumbs as crumb, i}
 			<li class:active={i === breadcrumbs.length - 1}>
 				{#if crumb.path && i < breadcrumbs.length - 1}
-					<a href={crumb.path} use:link>{crumb.label}</a>
+					<a href={crumb.path}>{crumb.label}</a>
 				{:else}
 					<span>{crumb.label}</span>
 				{/if}

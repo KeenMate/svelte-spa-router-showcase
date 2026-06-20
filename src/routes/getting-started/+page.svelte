@@ -7,6 +7,13 @@ import { DocLayout, ShowcaseSection, CodeBlock } from '@keenmate/svelte-docs'
 	descriptionText="Install and configure @keenmate/svelte-spa-router in your Svelte 5 application">
 
 	<div class="py-1">
+		<div class="alert alert-success mb-4">
+			<strong>New in v5.2:</strong> for the cleanest setup with type-safe routes and
+			autocomplete on navigation, see <a href="/features/define-routes"><code>defineRoutes()</code></a>.
+			The pattern below still works perfectly — <code>defineRoutes()</code> is a recommended
+			addition on top, not a replacement.
+		</div>
+
 		<!-- Installation -->
 		<section class="mb-5">
 			<h2 class="mb-4">Installation</h2>
@@ -17,6 +24,10 @@ import { DocLayout, ShowcaseSection, CodeBlock } from '@keenmate/svelte-docs'
 				languageType="bash"
 				titleText="npm"
 			/>
+			<p class="mt-3"><small class="text-muted">
+				Requires Node.js 22+ for production builds (Node 20 has Svelte 5 compatibility issues).
+				See <a href="/whats-new">What's New</a> for the latest release highlights.
+			</small></p>
 		</section>
 
 		<!-- Basic Setup -->
@@ -208,7 +219,7 @@ let { routeParams = {} } = $props()
 						<div class="card-body">
 							<h5 class="card-title">Route Parameters</h5>
 							<p class="card-text">Learn about dynamic routing with parameters and wildcards</p>
-							<a href="/features/parameters" use:link class="btn btn-sm btn-outline-primary">Learn More →</a>
+							<a href="/features/parameters" class="btn btn-sm btn-outline-primary">Learn More →</a>
 						</div>
 					</div>
 				</div>
@@ -217,7 +228,7 @@ let { routeParams = {} } = $props()
 						<div class="card-body">
 							<h5 class="card-title">Navigation Guards</h5>
 							<p class="card-text">Protect routes and prevent navigation when needed</p>
-							<a href="/features/guards" use:link class="btn btn-sm btn-outline-primary">Learn More →</a>
+							<a href="/features/guards" class="btn btn-sm btn-outline-primary">Learn More →</a>
 						</div>
 					</div>
 				</div>
@@ -226,7 +237,7 @@ let { routeParams = {} } = $props()
 						<div class="card-body">
 							<h5 class="card-title">Querystring Helpers</h5>
 							<p class="card-text">Work with URL query parameters reactively</p>
-							<a href="/features/querystring" use:link class="btn btn-sm btn-outline-primary">Learn More →</a>
+							<a href="/features/querystring" class="btn btn-sm btn-outline-primary">Learn More →</a>
 						</div>
 					</div>
 				</div>
@@ -236,15 +247,19 @@ let { routeParams = {} } = $props()
 		<!-- Live Examples -->
 		<section class="mb-5">
 			<h2 class="mb-4">Try the Live Examples</h2>
-			<p>See the router in action with our interactive examples:</p>
+			<p>See the router in action — two live deploys, same source, different routing modes:</p>
 			<div class="d-flex gap-3 flex-wrap">
-				<a href="http://localhost:5050" target="_blank" class="btn btn-primary">
-					🚀 History Mode Example
+				<a href="https://history.svelte-spa-router.keenmate.dev" target="_blank" class="btn btn-primary">
+					🚀 History Mode
 				</a>
-				<a href="http://localhost:5054" target="_blank" class="btn btn-outline-primary">
-					🔗 Hash Mode Example
+				<a href="https://hash.svelte-spa-router.keenmate.dev" target="_blank" class="btn btn-outline-primary">
+					🔗 Hash Mode
 				</a>
 			</div>
+			<p class="mt-3"><small class="text-muted">
+				Running locally: <code>make dev</code> (port 5050, history) or <code>make dev-hash</code>
+				(port 5051, hash). See <a href="/examples">Examples</a> for the full per-feature deep-link list.
+			</small></p>
 		</section>
 	</div>
 </DocLayout>

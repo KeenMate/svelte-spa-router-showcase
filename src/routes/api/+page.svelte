@@ -8,7 +8,19 @@ import { DocLayout, ShowcaseSection, CodeBlock } from '@keenmate/svelte-docs'
 
 	<div class="py-1">
 
+		<div class="alert alert-success mb-4">
+			<strong>v5.2 additions worth knowing about:</strong>
+			<ul class="mb-0 mt-2">
+				<li><code>defineRoutes()</code> — type-safe routes + <code>nav</code>/<code>paths</code> helpers (see <a href="#named">Named Routes</a> and the <a href="/features/define-routes">dedicated feature page</a>)</li>
+				<li><code>revalidateCurrentRoute()</code> — re-check the active route on out-of-band permission changes (<a href="#navigation">Navigation Functions</a>)</li>
+				<li><code>setCurrentUser()</code> / <code>getCurrentUser()</code> — module-level state for reactive <code>hasPermission()</code> by default (<a href="#permissions">Permissions</a>)</li>
+				<li><code>onRevalidationFailure</code> config — custom handling for revalidation failures (<a href="#permissions">Permissions</a>)</li>
+				<li><code>relativeLocation</code> field on every Router event payload (<a href="/features/callbacks-events#relative-location">see callbacks-events</a>)</li>
+			</ul>
+		</div>
+
 		<!-- 🧭 Navigation Functions -->
+		<span id="navigation"></span>
 		<ShowcaseSection
 			titleText="🧭 Navigation Functions"
 			subtitleText="Programmatic navigation between routes"
@@ -62,6 +74,12 @@ import { DocLayout, ShowcaseSection, CodeBlock } from '@keenmate/svelte-docs'
 								<td><code>Promise&lt;void&gt;</code></td>
 								<td>Navigate to referrer with automatic scroll restoration</td>
 							</tr>
+							<tr>
+								<td><code>revalidateCurrentRoute()</code> <span class="badge bg-success">rc02</span></td>
+								<td>-</td>
+								<td><code>void</code></td>
+								<td>Re-run guards and conditions against the currently mounted route without remounting. Coalesces calls within ~50ms.</td>
+							</tr>
 						</tbody>
 					</table>
 				</div>
@@ -69,7 +87,7 @@ import { DocLayout, ShowcaseSection, CodeBlock } from '@keenmate/svelte-docs'
 
 			{#snippet controlsContent()}
 				<CodeBlock
-					codeContent={`import { push, replace, pop, goBack } from '@keenmate/svelte-spa-router'
+					codeContent={`import { push, replace, pop, goBack, revalidateCurrentRoute } from '@keenmate/svelte-spa-router'
 
 // String format
 await push('/about')
@@ -96,7 +114,11 @@ await replace('/login')
 await pop()
 
 // Go back to referrer (with scroll restoration)
-await goBack()`}
+await goBack()
+
+// Re-check guards/conditions on the current route
+// (e.g. on websocket-pushed permission change)
+revalidateCurrentRoute()`}
 					languageType="javascript"
 					titleText="Navigation Functions"
 				/>
@@ -437,6 +459,7 @@ const routes = {
 		</ShowcaseSection>
 
 		<!-- 🏷️ Named Routes -->
+		<span id="named"></span>
 		<ShowcaseSection
 			titleText="🏷️ Named Routes"
 			subtitleText="Register and resolve routes by name"
@@ -456,22 +479,48 @@ const routes = {
 						</thead>
 						<tbody>
 							<tr>
-								<td><code>registerRoutes()</code></td>
-								<td><code>routes: Record&lt;string, string&gt;</code></td>
-								<td>Register named routes for navigation</td>
+								<td><code>defineRoutes()</code> <span class="badge bg-success">rc01</span></td>
+								<td><code>definitions: Record&lt;string, RouteDefinition&gt;</code></td>
+								<td>Type-safe routes — returns <code>&#123; routes, nav, paths &#125;</code> with full IDE autocomplete. Auto-calls <code>registerRoutes()</code>.</td>
 							</tr>
 							<tr>
-								<td><code>getRegisteredRoutes()</code></td>
+								<td><code>registerRoutes()</code></td>
+								<td><code>routes: Record&lt;string, string&gt;</code></td>
+								<td>Register named routes for programmatic navigation</td>
+							</tr>
+							<tr>
+								<td><code>registerRoute()</code></td>
+								<td><code>name: string, pattern: string</code></td>
+								<td>Register a single named route</td>
+							</tr>
+							<tr>
+								<td><code>getRoutes()</code></td>
 								<td>-</td>
 								<td>Get all registered named routes</td>
 							</tr>
 							<tr>
-								<td><code>resolveNamedRoute()</code></td>
+								<td><code>getRouteByName()</code></td>
+								<td><code>name: string</code></td>
+								<td>Get the pattern for a registered route (or undefined)</td>
+							</tr>
+							<tr>
+								<td><code>hasRoute()</code></td>
+								<td><code>name: string</code></td>
+								<td>Check if a route name is registered</td>
+							</tr>
+							<tr>
+								<td><code>buildUrl()</code></td>
 								<td>
 									<code>name: string</code><br>
-									<code>params?: Record&lt;string, any&gt;</code>
+									<code>params?: Record&lt;string, any&gt;</code><br>
+									<code>query?: Record&lt;string, any&gt;</code>
 								</td>
-								<td>Resolve named route to path with parameters</td>
+								<td>Build URL string from a named route + params + optional query</td>
+							</tr>
+							<tr>
+								<td><code>clearRoutes()</code></td>
+								<td>-</td>
+								<td>Clear all registered routes (mostly for tests)</td>
 							</tr>
 						</tbody>
 					</table>
@@ -480,24 +529,34 @@ const routes = {
 
 			{#snippet controlsContent()}
 				<CodeBlock
-					codeContent={`import { registerRoutes, resolveNamedRoute } from '@keenmate/svelte-spa-router/routes'
-import { push } from '@keenmate/svelte-spa-router'
+					codeContent={`// MODERN: defineRoutes() — rc01+
+import { defineRoutes } from '@keenmate/svelte-spa-router/routes'
+import Home from './routes/Home.svelte'
 
-// Register named routes
-registerRoutes({
-  home: '/',
-  about: '/about',
-  userProfile: '/user/:userId',
-  blogPost: '/blog/:category/:slug'
+const { routes, nav, paths } = defineRoutes({
+  home: { path: '/', component: Home },
+  user: {
+    path: '/user/:id',
+    component: () => import('./routes/User.svelte')
+  }
 })
 
-// Navigate using names
-await push(['userProfile', { userId: 123 }])
-await push({ route: 'blogPost', params: { category: 'tech', slug: 'svelte-5' } })
+// Type-safe navigation (autocomplete on route names AND params)
+await nav.user.push({ id: 123 })
+const url = paths.user({ id: 123 })  // '/user/123'
 
-// Resolve to path
-const path = resolveNamedRoute('userProfile', { userId: 123 })
-// Result: '/user/123'`}
+// CLASSIC: registerRoutes + buildUrl
+import { registerRoutes, buildUrl } from '@keenmate/svelte-spa-router/routes'
+import { push } from '@keenmate/svelte-spa-router'
+
+registerRoutes({
+  home: '/',
+  userProfile: '/user/:userId'
+})
+
+await push(['userProfile', { userId: 123 }])
+const path = buildUrl('userProfile', { userId: 123 }, { tab: 'orders' })
+// '/user/123?tab=orders'`}
 					languageType="javascript"
 					titleText="Named Routes"
 				/>
@@ -509,15 +568,20 @@ const path = resolveNamedRoute('userProfile', { userId: 123 })
 					<p>Change URL patterns without updating navigation calls throughout your app.</p>
 
 					<h5>🔗 Type Safety</h5>
-					<p>Centralize route definitions for easier refactoring and TypeScript support.</p>
+					<p>
+						<code>defineRoutes()</code> (rc01+) extracts <code>:param</code> names from path
+						patterns at the type level. Typos in route names or parameter names fail at compile
+						time. <a href="/features/define-routes">Dedicated guide →</a>
+					</p>
 
-					<h5>⚡ Dynamic Resolution</h5>
-					<p>Build URLs with parameters at runtime using <code>resolveNamedRoute()</code>.</p>
+					<h5>⚡ URL Building</h5>
+					<p>Build URLs at runtime with <code>buildUrl()</code> or the typed <code>paths.X()</code> helpers from <code>defineRoutes()</code>.</p>
 				</div>
 			{/snippet}
 		</ShowcaseSection>
 
 		<!-- 🔐 Permissions & Authorization -->
+		<span id="permissions"></span>
 		<ShowcaseSection
 			titleText="🔐 Permissions & Authorization"
 			subtitleText="Role-based and resource-based access control"
@@ -539,22 +603,32 @@ const path = resolveNamedRoute('userProfile', { userId: 123 })
 							<tr>
 								<td><code>configurePermissions()</code></td>
 								<td><code>config: PermissionConfig</code></td>
-								<td>Configure permission system with user permissions provider</td>
+								<td>Configure <code>checkPermissions</code>, unauthorized behavior, optional <code>getCurrentUser</code> override, <code>onRevalidationFailure</code> (rc02)</td>
+							</tr>
+							<tr>
+								<td><code>setCurrentUser()</code> <span class="badge bg-success">rc02</span></td>
+								<td><code>user: any</code></td>
+								<td>Set the current user. Drives the default reactive <code>currentUserGetter</code> — every <code>hasPermission()</code> in a reactive context re-evaluates.</td>
+							</tr>
+							<tr>
+								<td><code>getCurrentUser()</code> <span class="badge bg-success">rc02</span></td>
+								<td>-</td>
+								<td>Read the current user. Symmetric reader for the <code>setCurrentUser</code>-backed state.</td>
 							</tr>
 							<tr>
 								<td><code>hasPermission()</code></td>
-								<td><code>permission: string | string[]</code></td>
-								<td>Check if user has specific permission(s)</td>
+								<td><code>requirements: &#123; any?: string[]; all?: string[] &#125;</code></td>
+								<td>Check if user satisfies the requirements. Reactive when called in <code>$derived</code> / <code>&#123;#if&#125;</code> / <code>$effect</code>.</td>
 							</tr>
 							<tr>
 								<td><code>createProtectedRoute()</code></td>
 								<td><code>options: ProtectedRouteOptions</code></td>
-								<td>Create route with permission and authorization checks</td>
+								<td>Create wrapped route with permission and authorization checks (no extra <code>wrap()</code> needed)</td>
 							</tr>
 							<tr>
 								<td><code>createProtectedRouteDefinition()</code></td>
 								<td><code>options: ProtectedRouteOptions</code></td>
-								<td>Create protected route definition for use with wrap()</td>
+								<td>Returns a route definition for advanced use with <code>wrap()</code></td>
 							</tr>
 						</tbody>
 					</table>
@@ -563,14 +637,30 @@ const path = resolveNamedRoute('userProfile', { userId: 123 })
 
 			{#snippet controlsContent()}
 				<CodeBlock
-					codeContent={`import { configurePermissions, createProtectedRoute } from '@keenmate/svelte-spa-router/helpers/permissions'
+					codeContent={`import { configurePermissions, setCurrentUser, createProtectedRoute } from '@keenmate/svelte-spa-router/helpers/permissions'
+import { revalidateCurrentRoute } from '@keenmate/svelte-spa-router'
+import Unauthorized from './Unauthorized.svelte'
 
-// Configure in main.js
+// Configure once in main.js
 configurePermissions({
-  getUserPermissions: () => ['read', 'write', 'admin.view']
+  checkPermissions: (user, requirements) => {
+    if (!user) return false
+    if (requirements.any) return requirements.any.some(p => user.permissions.includes(p))
+    if (requirements.all) return requirements.all.every(p => user.permissions.includes(p))
+    return true
+  },
+  unauthorizedBehavior: 'component',
+  unauthorizedComponent: Unauthorized,
+  // rc02: custom handler for revalidation failures
+  onRevalidationFailure: (detail) => {
+    notify('Your permissions changed — please reload')
+  }
 })
 
-// Protected route with role-based permissions
+// Login (reactive — every hasPermission() re-evaluates)
+setCurrentUser({ id: 1, permissions: ['admin.read'] })
+
+// Protected route
 const routes = {
   '/admin': createProtectedRoute({
     component: () => import('./Admin.svelte'),
@@ -582,11 +672,16 @@ const routes = {
     component: () => import('./Document.svelte'),
     permissions: { any: ['read'] },
     authorizationCallback: async (detail) => {
-      const hasAccess = await checkDocumentAccess(detail.routeParams.id)
-      return hasAccess
+      return await checkDocumentAccess(detail.params.id)
     }
   })
-}`}
+}
+
+// Websocket permission update — re-check sitting-on-page protected routes
+websocket.on('permissions:changed', (newPerms) => {
+  setCurrentUser({ ...getCurrentUser(), permissions: newPerms })
+  revalidateCurrentRoute()
+})`}
 					languageType="javascript"
 					titleText="Permissions"
 				/>
@@ -596,15 +691,25 @@ const routes = {
 				<div class="prose">
 					<h5>🛡️ Two-Layer Security</h5>
 					<ul>
-						<li><strong>Role-based:</strong> Fast permission checks (any/all)</li>
-						<li><strong>Resource-based:</strong> Slow API calls for specific resources</li>
+						<li><strong>Role-based:</strong> Fast permission checks (<code>any</code> / <code>all</code>)</li>
+						<li><strong>Resource-based:</strong> Slow async <code>authorizationCallback</code> for specific resources</li>
 					</ul>
 
-					<h5>⚡ Performance</h5>
-					<p>Permissions checked first (fast), then authorizationCallback (slow API call) only if needed.</p>
+					<h5>⚡ Reactive by default (rc02)</h5>
+					<p>
+						The default <code>currentUserGetter</code> is backed by module-level <code>$state</code>.
+						Calling <code>setCurrentUser()</code> triggers every <code>hasPermission()</code> in a
+						reactive context to re-evaluate. No subscription wiring needed.
+					</p>
 
-					<h5>🎯 Flexible Checks</h5>
-					<p>Use <code>any: []</code> for OR logic or <code>all: []</code> for AND logic in permission requirements.</p>
+					<h5>🔄 Active-route revalidation</h5>
+					<p>
+						<code>hasPermission()</code> covers UI element visibility. <code>revalidateCurrentRoute()</code>
+						covers "user is sitting on a now-forbidden page". Use both for full coverage.
+					</p>
+
+					<h5>🎯 Permission requirements</h5>
+					<p>Pass <code>&#123; any: [...] &#125;</code> for OR logic or <code>&#123; all: [...] &#125;</code> for AND logic.</p>
 				</div>
 			{/snippet}
 		</ShowcaseSection>

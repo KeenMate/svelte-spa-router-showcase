@@ -19,50 +19,153 @@ import { DocLayout, CodeBlock } from '@keenmate/svelte-docs'
 		<!-- Configuration -->
 		<section class="mb-5">
 			<h2 class="mb-4">Configuration</h2>
-			<p>Configure the permission system once in your <code>main.js</code> before mounting your app:</p>
+			<p>
+				Configure the permission system once in your <code>main.js</code> before mounting your app.
+				The minimum setup is <code>checkPermissions</code> — everything else has sensible defaults.
+			</p>
 
 			<CodeBlock
 				codeContent={`// main.js
-import { configurePermissions } from '@keenmate/svelte-spa-router/helpers/permissions'
-import { getCurrentUser } from './auth.svelte.js'
+import { configurePermissions, setCurrentUser } from '@keenmate/svelte-spa-router/helpers/permissions'
+import Unauthorized from './routes/Unauthorized.svelte'
 
 configurePermissions({
-  // Function to check if user has required permissions
+  // Required: check user permissions against requirements
   checkPermissions: (user, requirements) => {
     if (!user) return false
     if (!requirements) return true
 
-    // Check if user has ANY of the required permissions (OR logic)
     if (requirements.any) {
-      return requirements.any.some(perm =>
-        user.permissions.includes(perm)
-      )
+      return requirements.any.some(perm => user.permissions.includes(perm))
     }
-
-    // Check if user has ALL required permissions (AND logic)
     if (requirements.all) {
-      return requirements.all.every(perm =>
-        user.permissions.includes(perm)
-      )
+      return requirements.all.every(perm => user.permissions.includes(perm))
     }
-
     return true
   },
 
-  // Function to get current user
-  getCurrentUser,
+  // Recommended (rc02+): show unauthorized component without URL change
+  unauthorizedBehavior: 'component',
+  unauthorizedComponent: Unauthorized
 
-  // Handler for unauthorized access
-  onUnauthorized: (detail) => {
-    push('/unauthorized')
-  }
+  // Alternative: navigate to a real /unauthorized route
+  // unauthorizedBehavior: 'navigate',
+  // unauthorizedRoute: '/unauthorized'
 })
 
-// Now mount your app
+// On login (or app startup if user is already authenticated):
+setCurrentUser({
+  id: 1,
+  name: 'Alice',
+  permissions: ['admin.read', 'admin.write']
+})
+
 mount(App, { target: document.body })`}
 				languageType="javascript"
 				titleText="Configure permissions"
 			/>
+
+			<div class="alert alert-info mt-3">
+				<strong>Reactive by default in v5.2.0-rc02.</strong> If you skip the
+				<code>getCurrentUser</code> option and use <code>setCurrentUser()</code> to write the user
+				state, <code>hasPermission()</code> updates live inside <code>&#123;#if&#125;</code> blocks
+				without any subscription wiring. See the next section.
+			</div>
+		</section>
+
+		<!-- Reactive Permissions -->
+		<section class="mb-5">
+			<h2 class="mb-4">Reactive permissions with <code>setCurrentUser()</code> <span class="badge bg-success">rc02</span></h2>
+			<p>
+				In v5.0–rc01, the canonical example used a custom <code>getCurrentUser</code> that read from
+				a Svelte 4 store via <code>get(currentUser)</code> — a non-reactive read, so
+				<code>&#123;#if hasPermission(...)&#125;</code> only updated on navigation. A websocket
+				pushing a permission change wouldn't update the UI until the user clicked a link.
+			</p>
+			<p>
+				v5.2.0-rc02 backs the default <code>currentUserGetter</code> with module-level
+				<code>$state</code>. Every <code>hasPermission()</code> call in a reactive context tracks
+				user changes automatically.
+			</p>
+			<CodeBlock language="javascript" codeContent={`import { setCurrentUser, getCurrentUser, hasPermission } from '@keenmate/svelte-spa-router/helpers/permissions'
+
+// Login
+setCurrentUser({ id: 1, name: 'Alice', permissions: ['admin.read'] })
+
+// Logout
+setCurrentUser(null)
+
+// Mutate (read-then-write)
+setCurrentUser({ ...getCurrentUser(), permissions: newPerms })
+
+// Anywhere in a template — re-renders automatically
+{#if hasPermission({ any: ['admin.read'] })}
+  <a href="/admin">Admin Panel</a>
+{/if}`} titleText="setCurrentUser + reactive hasPermission" />
+
+			<h3 class="mt-4">Wiring up websocket-driven permission updates</h3>
+			<CodeBlock language="javascript" codeContent={`websocket.on('permissions:changed', (newPermissions) => {
+  setCurrentUser({
+    ...getCurrentUser(),
+    permissions: newPermissions
+  })
+  // Every {#if hasPermission(...)} block re-evaluates immediately
+  // (For protected routes the user is sitting on, see revalidateCurrentRoute below)
+})`} />
+
+			<div class="alert alert-info mt-3">
+				<strong>If you maintain your own reactive user store</strong> (your own
+				<code>$state</code> rune, or any other reactive container), keep passing
+				<code>configurePermissions(&#123; getCurrentUser &#125;)</code> and it'll keep working —
+				the default is the new behavior, but you can override it. Pass
+				<code>getCurrentUser: null</code> to explicitly reset back to the state-backed default.
+			</div>
+		</section>
+
+		<!-- revalidateCurrentRoute -->
+		<section class="mb-5">
+			<h2 class="mb-4">Re-checking the active route with <code>revalidateCurrentRoute()</code> <span class="badge bg-success">rc02</span></h2>
+			<p>
+				Reactive <code>hasPermission()</code> covers <strong>UI element visibility</strong> — menu
+				items, buttons, conditional sections. It <em>doesn't</em> cover the case where the user is
+				<strong>sitting on a protected page</strong> when their permissions are revoked. The router
+				only checks route conditions during navigation, so a user on <code>/admin</code> who loses
+				admin permission would stay on <code>/admin</code> until they navigated away.
+			</p>
+			<p>
+				<code>revalidateCurrentRoute()</code> re-runs guards and conditions against the currently
+				mounted route <em>without</em> re-mounting the component. On success, nothing visible
+				happens — the component keeps its state (no flicker, no scroll reset, no in-flight form data
+				lost). On failure, the same unauthorized handling fires as for fresh navigation, or you can
+				customize it with <code>onRevalidationFailure</code>.
+			</p>
+			<CodeBlock language="javascript" codeContent={`import { revalidateCurrentRoute } from '@keenmate/svelte-spa-router'
+import { configurePermissions, setCurrentUser, getCurrentUser } from '@keenmate/svelte-spa-router/helpers/permissions'
+
+// Optional: custom handler for revalidation failures
+// (fires INSTEAD OF the standard unauthorized handling for revalidation)
+configurePermissions({
+  onRevalidationFailure: (detail) => {
+    // Show a confirmation dialog, log an audit entry, soft-warn...
+    notify('Your permissions changed — please reload')
+    // If you don't navigate, the user stays on the current page
+  }
+})
+
+websocket.on('permissions:changed', (newPerms) => {
+  // 1. Update the user — covers menus, buttons, conditional UI
+  setCurrentUser({ ...getCurrentUser(), permissions: newPerms })
+
+  // 2. Re-check the active route — covers "user is on a now-forbidden page"
+  revalidateCurrentRoute()
+})`} titleText="Wiring rc02 reactive + revalidation together" />
+
+			<h3 class="mt-4">Safe to call on every websocket message</h3>
+			<p>
+				Calls within a ~50ms window are coalesced into a single re-validation pass. Multiple
+				<code>&lt;Router&gt;</code> instances (nested routers, zones) each register independently
+				and re-validate their own routes.
+			</p>
 		</section>
 
 		<!-- Protecting Routes -->
@@ -269,10 +372,10 @@ configurePermissions({
 
     return true
   },
-  getCurrentUser,
-  onUnauthorized: () => {
-    push('/unauthorized')
-  }
+  // rc02+: setCurrentUser() provides reactive defaults — getCurrentUser is optional
+  // getCurrentUser,  // only needed if you maintain your own reactive user store
+  unauthorizedBehavior: 'component',
+  unauthorizedComponent: Unauthorized
 })`}
 				languageType="javascript"
 				titleText="Complete setup"
@@ -431,8 +534,8 @@ import { hasPermission } from '@keenmate/svelte-spa-router/helpers/permissions'
 
     return true
   },
-  getCurrentUser,
-  onUnauthorized: () => push('/unauthorized')
+  unauthorizedBehavior: 'navigate',
+  unauthorizedRoute: '/unauthorized'
 })`}
 				languageType="javascript"
 				titleText="Custom permission logic"
@@ -468,10 +571,21 @@ import { hasPermission } from '@keenmate/svelte-spa-router/helpers/permissions'
 			</div>
 
 			<div class="alert alert-danger mt-3">
-				<h5>Unauthorized Handler</h5>
+				<h5>Configure unauthorized behavior</h5>
 				<p class="mb-0">
-					Always implement an <code>onUnauthorized</code> handler to gracefully handle
-					unauthorized access attempts.
+					Set <code>unauthorizedBehavior</code> + <code>unauthorizedComponent</code> (or
+					<code>unauthorizedRoute</code>) at config time so failed permission checks have a
+					consistent UI. The legacy <code>onUnauthorized</code> callback still works for backward
+					compatibility, but the declarative config is preferred.
+				</p>
+			</div>
+
+			<div class="alert alert-info mt-3">
+				<h5>Pair reactive permissions with route revalidation</h5>
+				<p class="mb-0">
+					<code>setCurrentUser()</code> updates UI conditionals reactively, but doesn't re-check
+					the currently mounted route. Call <code>revalidateCurrentRoute()</code> after a
+					permission update if the user might be sitting on a now-forbidden page.
 				</p>
 			</div>
 		</section>
@@ -524,12 +638,26 @@ export function isAuthenticated() {
 		<section class="mb-5">
 			<h2 class="mb-4">Try It Live</h2>
 			<p>See the permission system in action:</p>
-			<div class="alert alert-info">
-				<p class="mb-0">
-					Check out the <code>example-permissions/</code> directory in the repository for a complete
-					working example with mock authentication and role-based access control.
-				</p>
-			</div>
+			<ul>
+				<li>
+					<a href="https://history.svelte-spa-router.keenmate.dev/authorization-demo" target="_blank">
+						<code>/authorization-demo</code>
+					</a> — async <code>authorizationCallback</code> for per-resource checks
+				</li>
+				<li>
+					<a href="https://history.svelte-spa-router.keenmate.dev/admin" target="_blank">
+						<code>/admin</code>
+					</a> — permission-protected route (use the <strong>Toggle 👤</strong> button in the example header to switch users)
+				</li>
+				<li>
+					<a href="https://history.svelte-spa-router.keenmate.dev/settings" target="_blank">
+						<code>/settings</code>
+					</a> — route requiring <code>settings:manage</code> permission
+				</li>
+			</ul>
+			<p>
+				Source: <a href="https://github.com/keenmate/svelte-spa-router/tree/main/example" target="_blank"><code>example/</code></a> in the main repo.
+			</p>
 		</section>
 	</div>
 </DocLayout>

@@ -7,6 +7,15 @@ import { DocLayout, CodeBlock } from '@keenmate/svelte-docs'
 	descriptionText="Reactive, type-safe URL query parameter handling">
 
 	<div class="py-1">
+		<div class="alert alert-info mb-4">
+			<strong>Live demo:</strong>
+			<a href="https://history.svelte-spa-router.keenmate.dev/querystring-demo" target="_blank">
+				Open <code>/querystring-demo</code> →
+			</a>
+			Built-in helpers (read, update, parse arrays) plus a fully interactive OData / Microsoft Graph
+			custom-formatter playground built with <code>createQuerystringHelpers()</code>.
+		</div>
+
 		<!-- Introduction -->
 		<section class="mb-5">
 			<h2 class="mb-4">Working with Query Parameters</h2>

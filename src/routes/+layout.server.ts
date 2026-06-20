@@ -35,7 +35,9 @@ const config: PartialDocsConfig = {
 					{ label: 'Route Configuration', href: '/features/route-configuration' },
 					{ label: 'Route Parameters', href: '/features/parameters' },
 					{ label: 'Navigation Guards', href: '/features/guards' },
+					{ label: 'Link Actions & Active Highlighting', href: '/features/link-actions' },
 					{ label: 'Named Routes', href: '/features/named-routes' },
+					{ label: 'defineRoutes() (type-safe)', href: '/features/define-routes' },
 					{ label: 'Programmatic Navigation', href: '/features/programmatic-navigation' },
 					{ label: 'Referrer Tracking', href: '/features/referrer-tracking' },
 					{ label: 'Querystring', href: '/features/querystring' },
@@ -43,8 +45,7 @@ const config: PartialDocsConfig = {
 					{ label: 'Callbacks & Events', href: '/features/callbacks-events' },
 					{ label: 'Permissions', href: '/features/permissions' },
 					{ label: 'Multi-Zone Routing', href: '/features/multi-zone' },
-					{ label: 'Hierarchical Routes', href: '/features/hierarchical-routes' },
-					{ label: 'Nested Routes', href: '/features/nested-routes' },
+					{ label: 'Route Inheritance', href: '/features/hierarchical-routes' },
 					{ label: 'Route Metadata', href: '/features/metadata' },
 					{ label: 'Debug Logging', href: '/features/logging' },
 					{ label: 'Error Handling', href: '/features/error-handling' }
@@ -55,7 +56,7 @@ const config: PartialDocsConfig = {
 				href: '/api',
 				icon: '📚'
 			},
-			{ label: 'Migration from v4', href: '/migration', icon: '⬆️' },
+			{ label: 'Migration Guide', href: '/migration', icon: '⬆️' },
 			{
 				label: 'Examples',
 				href: '/examples',

@@ -7,6 +7,15 @@ import { DocLayout, CodeBlock } from '@keenmate/svelte-docs'
 	descriptionText="Automatically track and access information about the previous route">
 
 	<div class="py-1">
+		<div class="alert alert-info mb-4">
+			<strong>Live demo:</strong>
+			<a href="https://history.svelte-spa-router.keenmate.dev/referrer-demo" target="_blank">
+				Open <code>/referrer-demo</code> →
+			</a>
+			Navigate from there to other routes and back to see the referrer object update. The top bar
+			of the example app also shows the current referrer in real time.
+		</div>
+
 		<!-- Introduction -->
 		<section class="mb-5">
 			<h2 class="mb-4">Overview</h2>

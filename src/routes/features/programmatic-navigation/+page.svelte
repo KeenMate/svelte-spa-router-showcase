@@ -7,6 +7,14 @@ import { DocLayout, CodeBlock } from '@keenmate/svelte-docs'
 	descriptionText="Navigate your application programmatically with push(), replace(), and pop()">
 
 	<div class="py-1">
+		<div class="alert alert-info mb-4">
+			<strong>Live demo:</strong>
+			<a href="https://history.svelte-spa-router.keenmate.dev/links-demo" target="_blank">
+				Open <code>/links-demo</code> →
+			</a>
+			Shows <code>push()</code>, <code>replace()</code>, and <code>goBack()</code> with all supported call signatures (string, array, object, with navigation context).
+		</div>
+
 		<!-- Introduction -->
 		<section class="mb-5">
 			<h2 class="mb-4">Overview</h2>
