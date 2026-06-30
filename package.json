@@ -13,6 +13,7 @@
 		"@sveltejs/adapter-static": "^3.0.9",
 		"@sveltejs/kit": "^2.22.0",
 		"@sveltejs/vite-plugin-svelte": "^6.0.0",
+		"@types/node": "^26.0.1",
 		"sass": "^1.93.0",
 		"svelte": "^5.0.0",
 		"svelte-check": "^4.0.0",
@@ -21,7 +22,7 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@keenmate/svelte-docs": "^1.0.0-rc11",
+		"@keenmate/svelte-docs": "^1.0.0-rc12",
 		"@keenmate/svelte-spa-router": "^5.3.0",
 		"bootstrap": "^5.3.8"
 	},

@@ -7,8 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Navbar version badge showing the showcased router version** — `+layout.server.ts` reads `node_modules/@keenmate/svelte-spa-router/package.json` at build time (during the prerender server load) and passes it to `site.version` in the svelte-docs config, so the navbar badge now displays the actual installed router version (currently `v5.3.0`) and tracks it automatically on every dependency bump. The version is read by file path rather than imported because the router's `exports` map doesn't expose `./package.json`, and a path read also resolves correctly through `file:`/linked installs; it falls back to an empty string if the read fails.
+
 ### Changed
 
+- **`@keenmate/svelte-docs` bumped to `^1.0.0-rc12`** (from `^1.0.0-rc11`) — adds the `SiteConfig.version` field that drives the navbar version badge above. Added `@types/node` as a dev dependency so the `node:fs` read in the server load type-checks.
 - **Router dependency bumped to `@keenmate/svelte-spa-router@^5.3.0`** (from `^5.3.0-rc02`) — tracks the published stable release.
 - **Documentation refreshed for the stable v5.3.0 release** — the site previously framed 5.3.0 as an in-progress release candidate. Now that 5.3.0 is published as a single stable version, all RC version labels were rewritten to the stable version where each feature actually shipped:
   - **What's New** (`/whats-new`) — collapsed the separate `v5.3.0-rc01` / `v5.3.0-rc02` sections into one stable **v5.3.0** section, and added a **v5.2.1** section so the page shows the two most recent releases. The `isHidden → hidden` rename is no longer presented as a breaking headline (it never shipped in a stable release); it survives only as a short "pre-release adopters only" note. Install snippet updated to `@keenmate/svelte-spa-router@5.3.0`.
