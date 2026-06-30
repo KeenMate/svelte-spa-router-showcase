@@ -17,7 +17,7 @@ import { DocLayout, CodeBlock } from '@keenmate/svelte-docs'
 				loop prevention stops the strategy from running away.
 			</p>
 			<div class="alert alert-warning">
-				<strong>⚠️ Breaking change in v5.2.0-rc02:</strong> the built-in error toast was removed
+				<strong>⚠️ Breaking change in v5.2.0:</strong> the built-in error toast was removed
 				entirely. The <code>showToast</code> config field is gone. Notification UI is now your
 				responsibility — wire your favorite toast library inside the <code>onError</code> callback.
 				See <a href="#toast-removed">below</a> for the migration recipe.
@@ -144,9 +144,9 @@ import { routes } from './routes'
 			/>
 		</section>
 
-		<!-- Toast removed (rc02) -->
+		<!-- Toast removed (v5.2.0) -->
 		<section class="mb-5" id="toast-removed">
-			<h2 class="mb-4">⚠️ <code>showToast</code> removed in v5.2.0-rc02</h2>
+			<h2 class="mb-4">⚠️ <code>showToast</code> removed in v5.2.0</h2>
 			<p>
 				Previously the library rendered a built-in <code>&lt;div class="error-toast"&gt;</code> on
 				caught errors, gated by <code>showToast</code> (default <code>true</code>). The render
@@ -160,7 +160,7 @@ import { routes } from './routes'
 				preferred toast/snackbar library — the router's job is to surface the event, not paint pixels.
 			</p>
 			<CodeBlock
-				codeContent={`// ❌ rc01 and earlier
+				codeContent={`// ❌ v5.1.x and earlier
 configureGlobalErrorHandler({
   strategy: 'navigateSafe',
   safeRoute: '/',
@@ -168,7 +168,7 @@ configureGlobalErrorHandler({
   toastDuration: 5000     // ← removed
 })
 
-// ✅ rc02 — toast lives in onError
+// ✅ v5.2.0+ — toast lives in onError
 import { toast } from 'your-toast-lib'
 
 configureGlobalErrorHandler({

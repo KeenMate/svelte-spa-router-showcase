@@ -701,7 +701,7 @@ export const routes = {
         it) leaves the loading screen up <strong>forever</strong> — no timeout, no recovery short
         of navigating away.
         <br><br>
-        <strong>v5.2.0-rc02 safety net:</strong> if <code>hideLoading()</code> hasn't been called
+        <strong>v5.2.0 safety net:</strong> if <code>hideLoading()</code> hasn't been called
         within <strong>10 seconds</strong>, the router prints a <code>console.warn</code> naming
         the route and the missed call. This bypasses the configurable logger (configuration
         warnings always print). The warning resets and re-fires on subsequent navigations.

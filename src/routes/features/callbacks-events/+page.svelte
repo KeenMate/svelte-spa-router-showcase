@@ -41,7 +41,7 @@
 			</div>
 
 			<div class="alert alert-success">
-				<strong>v5.2.0-rc02:</strong> every event payload now includes a
+				<strong>v5.2.0:</strong> every event payload now includes a
 				<a href="#relative-location"><code>relativeLocation</code></a> field — the prefix-stripped
 				path for nested routers. For root routers it equals <code>location</code>.
 			</div>
@@ -71,7 +71,7 @@
 						codeContent={`interface RouteLoadingDetail {
   route: string             // Route pattern (e.g., '/user/:id')
   location: string          // Full app path (e.g., '/user/123')
-  relativeLocation: string  // Prefix-stripped path (rc02+). Equal to location on root routers.
+  relativeLocation: string  // Prefix-stripped path (v5.2.0+). Equal to location on root routers.
   querystring: string       // Query string (e.g., 'tab=profile')
   params: object            // Route parameters (e.g., { id: '123' })
 }`}
@@ -124,7 +124,7 @@
 						codeContent={`interface RouteLoadedDetail {
   route: string             // Route pattern
   location: string          // Full app path
-  relativeLocation: string  // Prefix-stripped path (rc02+)
+  relativeLocation: string  // Prefix-stripped path (v5.2.0+)
   querystring: string       // Query string
   params: object            // Route parameters
   component: function       // Loaded component
@@ -198,7 +198,7 @@
 						codeContent={`interface ConditionsFailedDetail {
   route: string             // Route pattern that failed
   location: string          // Attempted full path
-  relativeLocation: string  // Prefix-stripped path (rc02+)
+  relativeLocation: string  // Prefix-stripped path (v5.2.0+)
   querystring: string       // Query string
   params: object            // Route parameters
 }`}
@@ -246,7 +246,7 @@
 						a <code>'*'</code> catch-all route matches a URL that no other route claimed.
 					</p>
 					<div class="alert alert-warning">
-						<strong>v5.2.0-rc02 fix:</strong> previously, configuring a <code>'*': NotFound</code>
+						<strong>v5.2.0 fix:</strong> previously, configuring a <code>'*': NotFound</code>
 						catch-all <em>suppressed</em> this event entirely — apps that wanted to both render
 						a 404 page and log the miss couldn't have both. The event now fires alongside the
 						catch-all render.
@@ -256,7 +256,7 @@
 					<CodeBlock
 						codeContent={`interface NotFoundDetail {
   location: string          // Path that was not found
-  relativeLocation: string  // Prefix-stripped path (rc02+)
+  relativeLocation: string  // Prefix-stripped path (v5.2.0+)
   querystring: string       // Query string (if any)
 }`}
 						languageType="typescript"
@@ -302,16 +302,16 @@
 
 		<!-- Relative location for nested routers -->
 		<section class="mb-5" id="relative-location">
-			<h2 class="mb-4">Relative location for nested routers <span class="badge bg-success">rc02</span></h2>
+			<h2 class="mb-4">Relative location for nested routers <span class="badge bg-success">v5.2.0</span></h2>
 			<p>
 				Nested <code>&lt;Router&gt;</code> instances configured with a <code>prefix</code> define
 				their routes in <em>prefix-relative</em> terms (e.g. <code>'/known'</code>, not
 				<code>'/foo/bar/known'</code>). Internally the router matches against the prefix-stripped
-				path. Before rc02, every event payload reported the <strong>full app URL</strong> in
+				path. Before v5.2.0, every event payload reported the <strong>full app URL</strong> in
 				<code>location</code> — two different notions of "location" depending on whether you looked
 				at route definitions or event payloads. Consumers had to strip the prefix themselves.
 			</p>
-			<p>In rc02, every event payload includes both:</p>
+			<p>In v5.2.0, every event payload includes both:</p>
 			<ul>
 				<li>
 					<strong><code>location</code></strong> — full app URL. Use this for logging, analytics,

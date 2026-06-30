@@ -44,7 +44,7 @@ configurePermissions({
     return true
   },
 
-  // Recommended (rc02+): show unauthorized component without URL change
+  // Recommended (v5.2.0+): show unauthorized component without URL change
   unauthorizedBehavior: 'component',
   unauthorizedComponent: Unauthorized
 
@@ -66,7 +66,7 @@ mount(App, { target: document.body })`}
 			/>
 
 			<div class="alert alert-info mt-3">
-				<strong>Reactive by default in v5.2.0-rc02.</strong> If you skip the
+				<strong>Reactive by default in v5.2.0.</strong> If you skip the
 				<code>getCurrentUser</code> option and use <code>setCurrentUser()</code> to write the user
 				state, <code>hasPermission()</code> updates live inside <code>&#123;#if&#125;</code> blocks
 				without any subscription wiring. See the next section.
@@ -75,15 +75,15 @@ mount(App, { target: document.body })`}
 
 		<!-- Reactive Permissions -->
 		<section class="mb-5">
-			<h2 class="mb-4">Reactive permissions with <code>setCurrentUser()</code> <span class="badge bg-success">rc02</span></h2>
+			<h2 class="mb-4">Reactive permissions with <code>setCurrentUser()</code> <span class="badge bg-success">v5.2.0</span></h2>
 			<p>
-				In v5.0–rc01, the canonical example used a custom <code>getCurrentUser</code> that read from
+				In v5.0 and v5.1, the canonical example used a custom <code>getCurrentUser</code> that read from
 				a Svelte 4 store via <code>get(currentUser)</code> — a non-reactive read, so
 				<code>&#123;#if hasPermission(...)&#125;</code> only updated on navigation. A websocket
 				pushing a permission change wouldn't update the UI until the user clicked a link.
 			</p>
 			<p>
-				v5.2.0-rc02 backs the default <code>currentUserGetter</code> with module-level
+				v5.2.0 backs the default <code>currentUserGetter</code> with module-level
 				<code>$state</code>. Every <code>hasPermission()</code> call in a reactive context tracks
 				user changes automatically.
 			</p>
@@ -124,7 +124,7 @@ setCurrentUser({ ...getCurrentUser(), permissions: newPerms })
 
 		<!-- revalidateCurrentRoute -->
 		<section class="mb-5">
-			<h2 class="mb-4">Re-checking the active route with <code>revalidateCurrentRoute()</code> <span class="badge bg-success">rc02</span></h2>
+			<h2 class="mb-4">Re-checking the active route with <code>revalidateCurrentRoute()</code> <span class="badge bg-success">v5.2.0</span></h2>
 			<p>
 				Reactive <code>hasPermission()</code> covers <strong>UI element visibility</strong> — menu
 				items, buttons, conditional sections. It <em>doesn't</em> cover the case where the user is
@@ -158,7 +158,7 @@ websocket.on('permissions:changed', (newPerms) => {
 
   // 2. Re-check the active route — covers "user is on a now-forbidden page"
   revalidateCurrentRoute()
-})`} titleText="Wiring rc02 reactive + revalidation together" />
+})`} titleText="Wiring v5.2.0 reactive + revalidation together" />
 
 			<h3 class="mt-4">Safe to call on every websocket message</h3>
 			<p>
@@ -372,7 +372,7 @@ configurePermissions({
 
     return true
   },
-  // rc02+: setCurrentUser() provides reactive defaults — getCurrentUser is optional
+  // v5.2.0+: setCurrentUser() provides reactive defaults — getCurrentUser is optional
   // getCurrentUser,  // only needed if you maintain your own reactive user store
   unauthorizedBehavior: 'component',
   unauthorizedComponent: Unauthorized

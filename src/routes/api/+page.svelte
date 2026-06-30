@@ -75,7 +75,7 @@ import { DocLayout, ShowcaseSection, CodeBlock } from '@keenmate/svelte-docs'
 								<td>Navigate to referrer with automatic scroll restoration</td>
 							</tr>
 							<tr>
-								<td><code>revalidateCurrentRoute()</code> <span class="badge bg-success">rc02</span></td>
+								<td><code>revalidateCurrentRoute()</code> <span class="badge bg-success">v5.2.0</span></td>
 								<td>-</td>
 								<td><code>void</code></td>
 								<td>Re-run guards and conditions against the currently mounted route without remounting. Coalesces calls within ~50ms.</td>
@@ -479,7 +479,7 @@ const routes = {
 						</thead>
 						<tbody>
 							<tr>
-								<td><code>defineRoutes()</code> <span class="badge bg-success">rc01</span></td>
+								<td><code>defineRoutes()</code> <span class="badge bg-success">v5.2.0</span></td>
 								<td><code>definitions: Record&lt;string, RouteDefinition&gt;</code></td>
 								<td>Type-safe routes — returns <code>&#123; routes, nav, paths &#125;</code> with full IDE autocomplete. Auto-calls <code>registerRoutes()</code>.</td>
 							</tr>
@@ -529,7 +529,7 @@ const routes = {
 
 			{#snippet controlsContent()}
 				<CodeBlock
-					codeContent={`// MODERN: defineRoutes() — rc01+
+					codeContent={`// MODERN: defineRoutes() — v5.2.0+
 import { defineRoutes } from '@keenmate/svelte-spa-router/routes'
 import Home from './routes/Home.svelte'
 
@@ -569,7 +569,7 @@ const path = buildUrl('userProfile', { userId: 123 }, { tab: 'orders' })
 
 					<h5>🔗 Type Safety</h5>
 					<p>
-						<code>defineRoutes()</code> (rc01+) extracts <code>:param</code> names from path
+						<code>defineRoutes()</code> (v5.2.0+) extracts <code>:param</code> names from path
 						patterns at the type level. Typos in route names or parameter names fail at compile
 						time. <a href="/features/define-routes">Dedicated guide →</a>
 					</p>
@@ -603,15 +603,15 @@ const path = buildUrl('userProfile', { userId: 123 }, { tab: 'orders' })
 							<tr>
 								<td><code>configurePermissions()</code></td>
 								<td><code>config: PermissionConfig</code></td>
-								<td>Configure <code>checkPermissions</code>, unauthorized behavior, optional <code>getCurrentUser</code> override, <code>onRevalidationFailure</code> (rc02)</td>
+								<td>Configure <code>checkPermissions</code>, unauthorized behavior, optional <code>getCurrentUser</code> override, <code>onRevalidationFailure</code> (v5.2.0)</td>
 							</tr>
 							<tr>
-								<td><code>setCurrentUser()</code> <span class="badge bg-success">rc02</span></td>
+								<td><code>setCurrentUser()</code> <span class="badge bg-success">v5.2.0</span></td>
 								<td><code>user: any</code></td>
 								<td>Set the current user. Drives the default reactive <code>currentUserGetter</code> — every <code>hasPermission()</code> in a reactive context re-evaluates.</td>
 							</tr>
 							<tr>
-								<td><code>getCurrentUser()</code> <span class="badge bg-success">rc02</span></td>
+								<td><code>getCurrentUser()</code> <span class="badge bg-success">v5.2.0</span></td>
 								<td>-</td>
 								<td>Read the current user. Symmetric reader for the <code>setCurrentUser</code>-backed state.</td>
 							</tr>
@@ -651,7 +651,7 @@ configurePermissions({
   },
   unauthorizedBehavior: 'component',
   unauthorizedComponent: Unauthorized,
-  // rc02: custom handler for revalidation failures
+  // v5.2.0: custom handler for revalidation failures
   onRevalidationFailure: (detail) => {
     notify('Your permissions changed — please reload')
   }
@@ -695,7 +695,7 @@ websocket.on('permissions:changed', (newPerms) => {
 						<li><strong>Resource-based:</strong> Slow async <code>authorizationCallback</code> for specific resources</li>
 					</ul>
 
-					<h5>⚡ Reactive by default (rc02)</h5>
+					<h5>⚡ Reactive by default (v5.2.0)</h5>
 					<p>
 						The default <code>currentUserGetter</code> is backed by module-level <code>$state</code>.
 						Calling <code>setCurrentUser()</code> triggers every <code>hasPermission()</code> in a
